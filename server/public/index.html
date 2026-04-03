@@ -1,38 +1,414 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
-    <link href="style.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"
-        integrity="sha512-Xm9qbB6Pu06k3PUwPj785dyTl6oHxgsv9nHp7ej7nCpAqGZT3OZpsELuCYX05DdonFpTlBpXMOxjavIAIUwr0w=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script defer src="app.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOID — BlackCrownTech</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"
+    integrity="sha512-Xm9qbB6Pu06k3PUwPj785dyTl6oHxgsv9nHp7ej7nCpAqGZT3OZpsELuCYX05DdonFpTlBpXMOxjavIAIUwr0w=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="app.js"></script>
 </head>
-
 <body>
-    <main>
-        <form class="form-join">
-            <input type="text" id="name" maxlength="8" placeholder="Your name" size="5" required>
-            <input type="text" id="room" placeholder="Chat room" size="5" required>
-            <button id="join" type="submit">Join</button>
+
+<!-- ══════════════════════════════════════════════════════════
+     IDENTITY SCREEN  (full page, shown on first visit / PIN lock)
+══════════════════════════════════════════════════════════ -->
+<div class="id-screen" id="idScreen">
+  <div class="id-card">
+
+    <div class="id-brand">
+      <span class="id-brand__hex">⬡</span>
+      <div>
+        <h1 class="id-brand__name">VOID</h1>
+        <p class="id-brand__sub">by <strong>BlackCrownTech</strong></p>
+      </div>
+    </div>
+
+    <div class="id-tagline">
+      <span class="id-tag">🔒 No phone</span>
+      <span class="id-tag">🚫 No email</span>
+      <span class="id-tag">👤 No tracking</span>
+    </div>
+
+    <!-- VOID ID display -->
+    <div class="void-id-box">
+      <div class="void-id-label">Your VOID ID</div>
+      <div class="void-id-row">
+        <span class="void-id-val" id="voidIdDisplay">V·······</span>
+        <button class="btn-icon" id="copyVoidId"  title="Copy ID">📋</button>
+        <button class="btn-icon" id="regenVoidId" title="New ID">🔄</button>
+      </div>
+      <p class="void-id-hint">This anonymous ID is stored only on your device.</p>
+    </div>
+
+    <!-- PIN unlock (returning user with PIN set) -->
+    <div id="pinUnlockSection" style="display:none">
+      <p class="id-section-title">🔐 Enter your PIN to continue</p>
+      <div class="pin-dots" id="pinDots">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="pin-pad" id="pinPad">
+        <button class="pin-key" data-k="1">1</button><button class="pin-key" data-k="2">2</button><button class="pin-key" data-k="3">3</button>
+        <button class="pin-key" data-k="4">4</button><button class="pin-key" data-k="5">5</button><button class="pin-key" data-k="6">6</button>
+        <button class="pin-key" data-k="7">7</button><button class="pin-key" data-k="8">8</button><button class="pin-key" data-k="9">9</button>
+        <button class="pin-key pin-key--wide" data-k="new">Use new identity</button>
+        <button class="pin-key" data-k="0">0</button>
+        <button class="pin-key" data-k="del">⌫</button>
+      </div>
+      <p class="field-error" id="pinUnlockError" style="display:none">Incorrect PIN</p>
+    </div>
+
+    <!-- Setup form (new user / after unlock) -->
+    <div id="idSetupSection">
+      <div class="input-group">
+        <label for="nicknameInput">Nickname</label>
+        <input type="text" id="nicknameInput" maxlength="20"
+          placeholder="Choose a nickname" autocomplete="off" />
+      </div>
+      <div class="input-group">
+        <label for="pinSetInput">
+          PIN
+          <span class="label-badge--optional">optional · locks your ID on this device</span>
+        </label>
+        <div class="pin-dots" id="pinSetDots">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="pin-pad" id="pinSetPad">
+          <button class="pin-key" data-k="1">1</button><button class="pin-key" data-k="2">2</button><button class="pin-key" data-k="3">3</button>
+          <button class="pin-key" data-k="4">4</button><button class="pin-key" data-k="5">5</button><button class="pin-key" data-k="6">6</button>
+          <button class="pin-key" data-k="7">7</button><button class="pin-key" data-k="8">8</button><button class="pin-key" data-k="9">9</button>
+          <button class="pin-key pin-key--wide" data-k="skip">Skip PIN</button>
+          <button class="pin-key" data-k="0">0</button>
+          <button class="pin-key" data-k="del">⌫</button>
+        </div>
+        <p class="pin-hint" id="pinSetHint">Enter 4–6 digits or skip</p>
+      </div>
+      <button class="btn-primary btn-full" id="enterVoidBtn" disabled>
+        <span>Enter VOID</span><span class="btn-arrow">→</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN APP SHELL
+══════════════════════════════════════════════════════════ -->
+<div class="app" id="app" style="display:none">
+
+  <!-- ── Sidebar ────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <span class="logo-hex">⬡</span>
+      <span class="logo-text">VOID</span>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="section-header">
+        <span class="section-title">Channels</span>
+        <button class="btn-icon" id="createRoomBtn" title="New channel">＋</button>
+      </div>
+      <ul class="room-list" id="roomList">
+        <li class="room-item--empty">No active channels</li>
+      </ul>
+    </div>
+
+    <!-- Admin shortcut (hidden until admin) -->
+    <div class="sidebar__section" id="adminSideSection" style="display:none">
+      <div class="section-header">
+        <span class="section-title">Admin</span>
+      </div>
+      <button class="sidebar__admin-btn" id="sideAdminBtn">👑 Admin Panel</button>
+    </div>
+
+    <div class="sidebar__footer">
+      <div class="void-id-sidebar" id="sideVoidId" title="Your VOID ID">
+        <span class="void-id-sidebar__icon">⬡</span>
+        <span class="void-id-sidebar__val" id="sideVoidIdVal">—</span>
+        <button class="btn-icon" id="sideVoidCopy" title="Copy VOID ID">📋</button>
+      </div>
+      <div class="user-profile">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div class="profile-meta">
+          <div class="profile-name" id="profileName">Not connected</div>
+          <div class="profile-status status--online" id="profileStatus">● Online</div>
+        </div>
+        <button class="btn-icon" id="settingsBtn" title="Settings">⚙</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Chat wrap ──────────────────────────────────────── -->
+  <div class="chat-wrap">
+
+    <!-- Join overlay -->
+    <div class="join-overlay" id="joinOverlay">
+      <div class="join-card">
+        <div class="join-header">
+          <div class="join-avatar" id="joinAvatar">?</div>
+          <div>
+            <div class="join-name" id="joinName">Anonymous</div>
+            <div class="join-vid"  id="joinVid">VOID ID: —</div>
+          </div>
+        </div>
+        <p class="join-lead">Choose a channel to join</p>
+        <form id="formJoin" novalidate>
+          <div class="input-group">
+            <label for="roomInput">Channel</label>
+            <input type="text" id="roomInput" placeholder="e.g. general" autocomplete="off" required />
+          </div>
+          <div class="input-group" id="passwordGroup" style="display:none">
+            <label for="roomPassword">Password <span class="label-badge">🔒 Protected</span></label>
+            <input type="password" id="roomPassword" placeholder="Room password" />
+            <span class="field-error" id="passwordError" style="display:none"></span>
+          </div>
+          <button type="submit" class="btn-primary btn-full" id="joinBtn">
+            <span>Join Channel</span><span class="btn-arrow">→</span>
+          </button>
         </form>
+      </div>
+    </div>
 
-        <ul class="chat-display"></ul>
+    <!-- Chat screen -->
+    <div class="chat-screen" id="chatScreen" style="display:none">
 
-        <p class="user-list"></p>
+      <header class="chat-header">
+        <div class="chat-header__left">
+          <span class="ch-hash">#</span>
+          <span class="ch-name" id="currentRoom">—</span>
+          <span class="ch-lock" id="chLock" style="display:none" title="Channel locked">🔒</span>
+          <span class="ch-badge">🔒 Secure</span>
+          <span class="ch-admin-badge" id="chAdminBadge" style="display:none">👑 Admin</span>
+        </div>
+        <div class="chat-header__right">
+          <button class="btn-icon" id="adminPanelBtn" style="display:none" title="Admin Panel">👑</button>
+          <button class="btn-icon" id="searchBtn"     title="Search">🔍</button>
+          <button class="btn-icon" id="toggleUsersBtn" title="Toggle users">👥</button>
+        </div>
+      </header>
 
-        <p class="room-list"></p>
+      <!-- Pinned message bar -->
+      <div class="pinned-bar" id="pinnedBar" style="display:none">
+        <span class="pinned-bar__icon">📌</span>
+        <span class="pinned-bar__text" id="pinnedText"></span>
+        <button class="btn-icon" id="pinnedClose" title="Dismiss">✕</button>
+      </div>
 
-        <p class="activity"></p>
+      <!-- Search bar -->
+      <div class="search-bar" id="searchBar" style="display:none">
+        <input type="text" id="searchInput" placeholder="Search messages…" autocomplete="off" />
+        <button class="btn-icon" id="searchClose">✕</button>
+      </div>
 
-        <form class="form-msg">
-            <input type="text" id="message" placeholder="Your message" required>
-            <button type="submit">Send</button>
-        </form>
-    </main>
+      <!-- Messages -->
+      <div class="chat-body">
+        <ul class="chat-display" id="chatDisplay"></ul>
+        <div class="activity-bar" id="activityBar"></div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="chat-footer">
+        <div class="reply-preview" id="replyPreview" style="display:none">
+          <span class="rp-icon">↩</span>
+          <div class="rp-body">Replying to <strong id="replyToName"></strong>
+            <span id="replyToText" class="rp-snip"></span></div>
+          <button class="btn-icon" id="cancelReply">✕</button>
+        </div>
+        <div class="slow-bar" id="slowBar" style="display:none">
+          <span id="slowCountdown">⏳ 5s</span>
+        </div>
+        <div class="input-row">
+          <button class="btn-icon" id="attachBtn"  title="Attach image URL">📎</button>
+          <input  type="text"     id="msgInput"    placeholder="Message #channel" autocomplete="off" />
+          <button class="btn-icon" id="emojiBtn"   title="Emoji">😊</button>
+          <button class="send-btn" id="sendBtn">Send</button>
+        </div>
+        <div class="emoji-picker" id="emojiPicker" style="display:none"></div>
+      </footer>
+    </div><!-- /chat-screen -->
+  </div><!-- /chat-wrap -->
+
+  <!-- ── Users panel ────────────────────────────────────── -->
+  <aside class="users-panel" id="usersPanel">
+    <div class="panel-header">
+      Online <span class="online-badge" id="onlineCount">0</span>
+    </div>
+    <ul class="users-list" id="usersList"></ul>
+  </aside>
+
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════ -->
+
+<!-- Create Channel -->
+<div class="modal-overlay" id="createRoomModal" style="display:none">
+  <div class="modal">
+    <div class="modal__hdr">
+      <h3>Create Channel</h3>
+      <button class="btn-icon" id="closeCreateModal">✕</button>
+    </div>
+    <form id="createRoomForm">
+      <div class="input-group">
+        <label># Channel name</label>
+        <input type="text" id="newRoomName" placeholder="e.g. gaming" maxlength="30" autocomplete="off" required />
+      </div>
+      <div class="input-group">
+        <label>Password <span class="label-badge--optional">optional</span></label>
+        <input type="password" id="newRoomPassword" placeholder="Leave blank for public" />
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary" id="cancelCreate">Cancel</button>
+        <button type="submit" class="btn-primary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="modal-overlay" id="settingsModal" style="display:none">
+  <div class="modal">
+    <div class="modal__hdr">
+      <h3>⚙ Settings</h3>
+      <button class="btn-icon" id="closeSettings">✕</button>
+    </div>
+    <div class="settings-block">
+      <label class="settings-label">Status</label>
+      <div class="status-opts" id="statusOptions">
+        <button class="status-opt status-opt--active" data-status="online">🟢 Online</button>
+        <button class="status-opt" data-status="idle">🟡 Idle</button>
+        <button class="status-opt" data-status="dnd">🔴 Do Not Disturb</button>
+      </div>
+    </div>
+    <div class="settings-block">
+      <label class="settings-label">Your VOID ID</label>
+      <div class="void-id-row">
+        <span class="void-id-val" id="settingsVoidId">—</span>
+        <button class="btn-icon" id="settingsCopyVoid" title="Copy">📋</button>
+      </div>
+      <p class="settings-hint">Share your ID so others can find you.</p>
+    </div>
+    <div class="settings-block">
+      <label class="settings-label">About</label>
+      <p class="settings-about">VOID v3.0 · Node.js + Socket.IO + WebRTC<br>By <strong>BlackCrownTech</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div class="modal-overlay" id="adminModal" style="display:none">
+  <div class="modal modal--wide">
+    <div class="modal__hdr">
+      <h3>👑 Admin Panel — #<span id="adminRoomName">—</span></h3>
+      <button class="btn-icon" id="closeAdminModal">✕</button>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab admin-tab--active" data-tab="users">👥 Users</button>
+      <button class="admin-tab" data-tab="room">🏠 Room</button>
+      <button class="admin-tab" data-tab="cmds">📋 Commands</button>
+    </div>
+
+    <!-- Users tab -->
+    <div class="admin-panel" id="adminTab-users">
+      <div id="adminUserList" class="admin-user-list"></div>
+    </div>
+
+    <!-- Room tab -->
+    <div class="admin-panel" id="adminTab-room" style="display:none">
+      <div class="admin-tool-grid">
+        <button class="admin-tool-btn" id="aLockBtn">🔒 Lock Channel</button>
+        <button class="admin-tool-btn" id="aUnlockBtn">🔓 Unlock</button>
+        <button class="admin-tool-btn admin-tool-btn--danger" id="aClearBtn">🗑 Clear Chat</button>
+        <button class="admin-tool-btn" id="aUnpinBtn">📌 Unpin</button>
+      </div>
+      <div class="input-group" style="margin-top:14px">
+        <label>📌 Pin message</label>
+        <div class="row-gap">
+          <input type="text" id="aPinInput" placeholder="Message to pin…" />
+          <button class="btn-primary" id="aPinBtn">Pin</button>
+        </div>
+      </div>
+      <div class="input-group" style="margin-top:12px">
+        <label>📢 Broadcast</label>
+        <div class="row-gap">
+          <input type="text" id="aBroadcastInput" placeholder="Announcement…" />
+          <button class="btn-primary" id="aBroadcastBtn">Send</button>
+        </div>
+      </div>
+      <div class="input-group" style="margin-top:12px">
+        <label>🐌 Slow mode <span class="label-badge--optional">seconds · 0 = off</span></label>
+        <div class="row-gap">
+          <input type="number" id="aSlowInput" min="0" max="300" placeholder="0" style="width:90px" />
+          <button class="btn-primary" id="aSlowBtn">Set</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commands tab -->
+    <div class="admin-panel" id="adminTab-cmds" style="display:none">
+      <div class="cmd-list">
+        <div class="cmd-row"><code>/kick @name</code><span>Kick user</span></div>
+        <div class="cmd-row"><code>/mute @name</code><span>Toggle mute</span></div>
+        <div class="cmd-row"><code>/ban @name</code><span>Ban by VOID ID</span></div>
+        <div class="cmd-row"><code>/promote @name</code><span>Give admin rights</span></div>
+        <div class="cmd-row"><code>/broadcast text</code><span>Announcement</span></div>
+        <div class="cmd-row"><code>/pin message</code><span>Pin a message</span></div>
+        <div class="cmd-row"><code>/unpin</code><span>Remove pin</span></div>
+        <div class="cmd-row"><code>/clear</code><span>Clear chat history</span></div>
+        <div class="cmd-row"><code>/lock</code><span>Lock channel</span></div>
+        <div class="cmd-row"><code>/unlock</code><span>Unlock channel</span></div>
+        <div class="cmd-row"><code>/slow 10</code><span>Slow mode (seconds)</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CALL UI
+══════════════════════════════════════════════════════════ -->
+
+<!-- Incoming call -->
+<div class="incoming-call" id="incomingCall" style="display:none">
+  <div class="incoming-call__pulse"></div>
+  <div class="incoming-call__info">
+    <div class="incoming-call__av" id="incomingAv">?</div>
+    <div class="incoming-call__meta">
+      <strong id="incomingName">Alice</strong>
+      <span   id="incomingType">📹 Video call</span>
+    </div>
+  </div>
+  <div class="incoming-call__btns">
+    <button id="acceptCall"  class="call-btn call-btn--accept" title="Accept">📞</button>
+    <button id="rejectCall"  class="call-btn call-btn--reject" title="Decline">📵</button>
+  </div>
+</div>
+
+<!-- Active call overlay -->
+<div class="call-overlay" id="callOverlay" style="display:none">
+  <div class="call-ui">
+    <div class="call-videos">
+      <video id="remoteVideo" autoplay playsinline class="call-vid call-vid--remote"></video>
+      <div   class="call-remote-av" id="callRemoteAv" style="display:none">?</div>
+      <video id="localVideo"  autoplay playsinline muted class="call-vid call-vid--local"></video>
+    </div>
+    <div class="call-info">
+      <span class="call-peer"   id="callWithName">—</span>
+      <span class="call-status" id="callStatus">Calling…</span>
+      <span class="call-timer"  id="callTimer"   style="display:none">00:00</span>
+    </div>
+    <div class="call-controls">
+      <button class="call-ctrl" id="ctrlMic"    title="Toggle mic">🎤</button>
+      <button class="call-ctrl" id="ctrlCam"    title="Toggle camera">📹</button>
+      <button class="call-ctrl" id="ctrlScreen" title="Share screen">🖥</button>
+      <button class="call-ctrl call-ctrl--end" id="ctrlHangup" title="End call">📵</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context menu (injected by JS) -->
+
 </body>
-
 </html>
