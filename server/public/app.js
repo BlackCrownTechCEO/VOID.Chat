@@ -1,5 +1,17 @@
-const socket = io('ws://localhost:3500')
+<<<<<<< Updated upstream
+=======
+// ═══════════════════════════════════════════════════════
+//  VOID v4 — BlackCrownTech  ·  app.js
+//  Friends · Groups · DMs · Owner · Admin · WebRTC Calls
+// ═══════════════════════════════════════════════════════
+'use strict'
 
+>>>>>>> Stashed changes
+const socket = io('ws://localhost:3500')
+const $  = id => document.getElementById(id)
+const $$ = sel => document.querySelectorAll(sel)
+
+<<<<<<< Updated upstream
 const msgInput = document.querySelector('#message')
 const nameInput = document.querySelector('#name')
 const chatRoom = document.querySelector('#room')
@@ -63,6 +75,610 @@ socket.on("message", (data) => {
     document.querySelector('.chat-display').appendChild(li)
 
     chatDisplay.scrollTop = chatDisplay.scrollHeight
+=======
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let myName     = ''
+let myVoidId   = ''
+let myRoom     = ''
+let amAdmin    = false
+let amOwner    = false
+
+// Chat mode: 'none' | 'room' | 'dm' | 'group'
+let chatMode   = 'none'
+let dmPartner  = null      // { voidId, name }
+let activeGroup= null      // group public object
+let groupRole  = 'member'  // 'owner'|'admin'|'member'
+
+let replyingTo  = null
+let typingUsers = new Map()
+let typingTimer = null
+let isTyping    = false
+let slowSecs    = 0
+let lastSentMs  = 0
+let currentStatus = 'online'
+let roomUserMap   = []     // latest richUsers list
+let myFriends     = []     // [{voidId,name,online}]
+let myGroups      = []     // group public objects
+let friendReqs    = []     // pending incoming requests
+let pendingGroupInvite = null  // {groupId,groupName,invitedBy,color}
+let dmUnread      = new Map()  // voidId → count
+let pendingRoomSwitch = null
+
+// ═══════════════════════════════════════════════════════
+//  VOID-ID IDENTITY
+// ═══════════════════════════════════════════════════════
+const ID_KEY = 'void_identity_v4'
+const CHARS  = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+function genVoidId() {
+    let id = 'V'
+    for (let i = 0; i < 7; i++) id += CHARS[Math.floor(Math.random() * CHARS.length)]
+    return id
+}
+function simHash(str) {
+    let h = 5381
+    for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i)
+    return (h >>> 0).toString(16).padStart(8, '0')
+}
+function loadId()    { try { return JSON.parse(localStorage.getItem(ID_KEY)) } catch { return null } }
+function saveId(obj) { localStorage.setItem(ID_KEY, JSON.stringify(obj)) }
+
+// ── PIN pad ───────────────────────────────────────────
+let pinUnlockBuf = '', pinSetBuf = ''
+
+function attachPinPad(padId, onFill, onSkip) {
+    const pad = $(padId); if (!pad) return
+    pad.addEventListener('click', e => {
+        const k = e.target.closest('.pin-key')?.dataset.k; if (!k) return
+        let buf = padId === 'pinPad' ? pinUnlockBuf : pinSetBuf
+        if (k === 'del')  buf = buf.slice(0, -1)
+        else if (k === 'skip' && onSkip) { if (padId === 'pinSetPad') { pinSetBuf = ''; onSkip() } return }
+        else if (k === 'new') { localStorage.removeItem(ID_KEY); location.reload(); return }
+        else if (/^\d$/.test(k) && buf.length < 6) buf += k
+        padId === 'pinPad' ? (pinUnlockBuf = buf) : (pinSetBuf = buf)
+        updateDots(padId === 'pinPad' ? 'pinDots' : 'pinSetDots', buf)
+        if (buf.length >= 4 && onFill) onFill(buf)
+    })
+}
+
+function updateDots(dotsId, buf) {
+    $$(` #${dotsId} span`).forEach((d, i) => d.classList.toggle('filled', i < buf.length))
+}
+
+function initIdentityScreen() {
+    const stored = loadId()
+    if (stored?.voidId) {
+        myVoidId = stored.voidId
+        $('voidIdDisplay').textContent = stored.voidId
+        if (stored.pinHash) {
+            $('idSetupSection').style.display  = 'none'
+            $('pinUnlockSection').style.display = 'block'
+            attachPinPad('pinPad', buf => {
+                if (simHash(buf) === stored.pinHash) {
+                    $('pinUnlockError').style.display  = 'none'
+                    $('pinUnlockSection').style.display = 'none'
+                    $('idSetupSection').style.display   = 'block'
+                    $('nicknameInput').value = stored.nickname || ''
+                    attachPinPad('pinSetPad', () => checkEnterBtn(), () => { pinSetBuf=''; $('pinSetHint').textContent='No PIN — skip'; checkEnterBtn() })
+                    checkEnterBtn()
+                } else { pinUnlockBuf=''; updateDots('pinDots',''); $('pinUnlockError').style.display='block' }
+            }, null)
+        } else {
+            $('nicknameInput').value = stored.nickname || ''
+            attachPinPad('pinSetPad', () => checkEnterBtn(), () => { pinSetBuf=''; $('pinSetHint').textContent='No PIN'; checkEnterBtn() })
+            checkEnterBtn()
+        }
+    } else {
+        myVoidId = genVoidId()
+        $('voidIdDisplay').textContent = myVoidId
+        attachPinPad('pinSetPad', () => checkEnterBtn(), () => { pinSetBuf=''; $('pinSetHint').textContent='No PIN — skip'; checkEnterBtn() })
+    }
+}
+
+$('nicknameInput').addEventListener('input', checkEnterBtn)
+function checkEnterBtn() { $('enterVoidBtn').disabled = !$('nicknameInput').value.trim() }
+
+$('regenVoidId').addEventListener('click', () => { myVoidId = genVoidId(); $('voidIdDisplay').textContent = myVoidId })
+$('copyVoidId').addEventListener('click',  () => navigator.clipboard.writeText(myVoidId).then(() => toast('VOID ID copied!','success')))
+
+$('enterVoidBtn').addEventListener('click', () => {
+    const nick = $('nicknameInput').value.trim(); if (!nick) return
+    const pin  = pinSetBuf.length >= 4 ? pinSetBuf : null
+    saveId({ voidId: myVoidId, nickname: nick, pinHash: pin ? simHash(pin) : null })
+    myName = nick
+    showApp()
+})
+
+function showApp() {
+    $('idScreen').style.display = 'none'
+    $('app').style.display      = 'flex'
+    $('sideVoidIdVal').textContent = myVoidId
+    $('joinAvatar').textContent    = ini(myName)
+    $('joinAvatar').style.backgroundColor = avColor(myName)
+    $('joinName').textContent  = myName
+    $('joinVid').textContent   = `VOID ID: ${myVoidId}`
+    $('myVoidIdDisplay2').textContent = myVoidId
+    $('settingsVoidId').textContent   = myVoidId
+    setProfile(myName, 'online')
+    $('sideVoidCopy').onclick = () => navigator.clipboard.writeText(myVoidId).then(() => toast('Copied!','success'))
+    $('settingsCopyVoid').onclick = () => navigator.clipboard.writeText(myVoidId).then(() => toast('Copied!','success'))
+    socket.emit('authenticate', { voidId: myVoidId, name: myName })
+    // Show claim owner button always (user can try)
+    $('ownerSideSection').style.display = 'block'
+    $('ownerPanelBtn').style.display    = 'none'
+}
+
+initIdentityScreen()
+
+// ═══════════════════════════════════════════════════════
+//  AVATAR / FORMAT HELPERS
+// ═══════════════════════════════════════════════════════
+const AV = ['#5b6cf5','#00c8ef','#22c55e','#f59e0b','#ef4444','#a78bfa','#ec4899','#14b8a6','#f97316','#38bdf8']
+function avColor(n) { let h=0; for(let i=0;i<n.length;i++) h=n.charCodeAt(i)+((h<<5)-h); return AV[Math.abs(h)%AV.length] }
+function ini(n) { return String(n).slice(0,2).toUpperCase() }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+function fmt(raw) {
+    let t = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    t = t.replace(/`([^`]+)`/g,'<code>$1</code>')
+    t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    t = t.replace(/\*(.+?)\*/g,'<em>$1</em>')
+    t = t.replace(/~~(.+?)~~/g,'<del>$1</del>')
+    t = t.replace(/(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp))(\s|$)/gi,'<a href="$1" target="_blank" rel="noopener"><img src="$1" class="msg-image" loading="lazy" alt="img"></a>$2')
+    t = t.replace(/(?<![=">])(https?:\/\/[^\s<>]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')
+    return t
+}
+
+// ═══════════════════════════════════════════════════════
+//  MESSAGE RENDERING
+// ═══════════════════════════════════════════════════════
+function buildMsgEl(data, opts = {}) {
+    const { id, name, text, time, type, replyTo, reactions } = data
+    const li = document.createElement('li')
+
+    if (type === 'system') {
+        li.className = 'msg msg--system'
+        li.innerHTML = `<span class="msg__system-text">${fmt(text)}</span>`
+        return li
+    }
+    if (type === 'broadcast') {
+        li.className = 'msg msg--broadcast'; li.dataset.msgId = id
+        li.innerHTML = `<div class="msg__avatar" style="background:${avColor(name)}">${ini(name)}</div>
+        <div class="msg__content"><div class="msg__header"><span class="msg__name" style="color:${avColor(name)}">${esc(name)}</span><span class="msg__time">${time}</span></div>
+        <div class="msg__text">${fmt(text)}</div></div>`
+        return li
+    }
+
+    const isMine = name === myName
+    li.className = 'msg'; li.dataset.msgId = id
+
+    const replyHtml = replyTo ? `<div class="msg__reply-ref"><span class="msg__reply-author">${esc(replyTo.name)}</span><span class="msg__reply-text">${esc((replyTo.text||'').slice(0,60))}${(replyTo.text||'').length>60?'…':''}</span></div>` : ''
+    const rxHtml = reactions ? buildRxHtml(reactions) : ''
+    const delBtn = (amAdmin || amOwner) ? `<button class="msg-action-btn msg-action-btn--del" data-action="del" data-mid="${id}" title="Delete">🗑</button>` : ''
+
+    li.innerHTML = `
+      <div class="msg__avatar"></div>
+      <div class="msg__content">
+        ${replyHtml}
+        <div class="msg__header">
+          <span class="msg__name"></span>
+          <span class="msg__time">${time}</span>
+          ${isMine?`<span class="msg__status" id="st-${id}">✓</span>`:''}
+        </div>
+        <div class="msg__text">${fmt(text)}</div>
+        <div class="msg__reactions" id="rx-${id}">${rxHtml}</div>
+      </div>
+      <div class="msg__actions">
+        <button class="msg-action-btn" data-action="react" data-mid="${id}" title="React">😊</button>
+        <button class="msg-action-btn" data-action="reply" data-mid="${id}" data-name="${esc(name)}" data-text="${esc(text)}" title="Reply">↩</button>
+        ${delBtn}
+      </div>`
+    const av = li.querySelector('.msg__avatar'); av.textContent=ini(name); av.style.backgroundColor=avColor(name)
+    const nm = li.querySelector('.msg__name');   nm.textContent=name; nm.style.color=avColor(name)
+    return li
+}
+
+function buildRxHtml(rx) {
+    return Object.entries(rx).filter(([,u])=>u.length).map(([e,u])=>{
+        const mine = u.includes(myName)
+        return `<button class="reaction-btn${mine?' reaction-btn--active':''}" data-emoji="${esc(e)}" title="${u.map(esc).join(', ')}">${e}<span class="reaction-count">${u.length}</span></button>`
+    }).join('')
+}
+
+// ═══════════════════════════════════════════════════════
+//  EMOJI PICKER
+// ═══════════════════════════════════════════════════════
+const EMOJIS = {
+    'Smileys':  ['😀','😃','😄','😁','😅','🤣','😂','🙂','😊','😇','🥰','😍','😘','😋','😜','🤪','🤔','😐','😏','😒','😔','😢','😭','😤','😠','🤬','🥺','😴'],
+    'Gestures': ['👍','👎','👌','✌️','🤞','🤟','🤘','🤙','👋','👏','🙌','🤝','🙏','💪','✍️','🖕','🤌'],
+    'Objects':  ['💬','🔒','🔓','🔑','🛡️','⚔️','🔧','⚙️','💻','📱','🎮','🎧','📡','🚀','💡','🔍','📌','📎','✉️','📣','🎤','🎵'],
+    'Symbols':  ['❤️','🧡','💛','💚','💙','💜','🖤','💯','✅','❌','⚠️','🔴','🟡','🟢','🔵','⭐','🌟','⚡','🔥','💥','❓','❗','🆕','🔞'],
+    'Food':     ['🍕','🍔','🌮','🍜','🍣','🍩','🍪','🎂','☕','🍺','🧃','🥤','🍷','🥂'],
+    'Nature':   ['🐶','🐱','🦋','🔥','💧','🌊','🌙','⭐','🌈','🌸','🍀','🦄','🐉','🌍'],
+}
+
+;(function buildPicker() {
+    const ep = $('emojiPicker')
+    for (const [cat, emojis] of Object.entries(EMOJIS)) {
+        const sec = document.createElement('div'); sec.className='emoji-category'
+        sec.innerHTML = `<div class="emoji-category__title">${cat}</div>`
+        const grid = document.createElement('div'); grid.className='emoji-grid'
+        emojis.forEach(e => {
+            const b = document.createElement('button'); b.className='emoji-item'; b.textContent=e
+            b.addEventListener('click', () => { $('msgInput').value += e; $('msgInput').focus(); ep.style.display='none' })
+            grid.appendChild(b)
+        })
+        sec.appendChild(grid); ep.appendChild(sec)
+    }
+})()
+
+$('emojiBtn').addEventListener('click', e => { e.stopPropagation(); $('emojiPicker').style.display = $('emojiPicker').style.display==='none'?'block':'none' })
+document.addEventListener('click', e => { if (!$('emojiPicker').contains(e.target) && e.target.id!=='emojiBtn') $('emojiPicker').style.display='none' })
+
+// ═══════════════════════════════════════════════════════
+//  SEND MESSAGE
+// ═══════════════════════════════════════════════════════
+function sendMsg() {
+    const text = $('msgInput').value.trim(); if (!text || !myName) return
+
+    if (text.startsWith('/') && (amAdmin || amOwner)) { handleSlash(text); $('msgInput').value=''; return }
+    if (text.startsWith('/')) { toast('Admin-only commands','error'); $('msgInput').value=''; return }
+
+    // Slow mode
+    if (slowSecs > 0 && !amAdmin && !amOwner) {
+        const wait = slowSecs - (Date.now()-lastSentMs)/1000
+        if (wait > 0) { toast(`⏳ Slow mode — wait ${Math.ceil(wait)}s`,'warn'); return }
+    }
+
+    if (chatMode === 'room') {
+        socket.emit('message', { name: myName, text, replyTo: replyingTo })
+    } else if (chatMode === 'dm' && dmPartner) {
+        socket.emit('sendDm', { toVoidId: dmPartner.voidId, text })
+    } else if (chatMode === 'group' && activeGroup) {
+        socket.emit('groupMsg', { groupId: activeGroup.id, text, replyTo: replyingTo })
+    }
+    lastSentMs = Date.now(); $('msgInput').value=''; clearReply(); stopTyping(); $('msgInput').focus()
+}
+
+$('sendBtn').addEventListener('click', sendMsg)
+$('msgInput').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()} })
+
+// Typing
+function stopTyping() { if(isTyping){isTyping=false;socket.emit('stopActivity')} clearTimeout(typingTimer) }
+$('msgInput').addEventListener('input', () => {
+    if (!isTyping) { isTyping=true; socket.emit('activity', myName) }
+    clearTimeout(typingTimer); typingTimer=setTimeout(stopTyping, 2500)
+})
+
+// ── Slash commands ────────────────────────────────────
+function handleSlash(text) {
+    const p = text.split(/\s+/); const cmd = p[0].slice(1).toLowerCase()
+    const t = (p[1]||'').replace('@',''); const rest = p.slice(1).join(' ')
+    const m = {
+        kick:()=>socket.emit('adminCmd',{cmd:'kick',target:t}),
+        ban: ()=>socket.emit('adminCmd',{cmd:'ban', target:t}),
+        mute:()=>socket.emit('adminCmd',{cmd:'mute',target:t}),
+        tempmute:()=>socket.emit('adminCmd',{cmd:'tempmute',target:t,data:p[2]||'5'}),
+        warn:()=>socket.emit('adminCmd',{cmd:'warn',target:t}),
+        clearwarns:()=>socket.emit('adminCmd',{cmd:'clearwarns',target:t}),
+        promote:()=>socket.emit('adminCmd',{cmd:'promote',target:t}),
+        demote: ()=>socket.emit('adminCmd',{cmd:'demote', target:t}),
+        clear:  ()=>socket.emit('adminCmd',{cmd:'clear'}),
+        lock:   ()=>socket.emit('adminCmd',{cmd:'lock'}),
+        unlock: ()=>socket.emit('adminCmd',{cmd:'unlock'}),
+        unpin:  ()=>socket.emit('adminCmd',{cmd:'unpin'}),
+        broadcast:()=>socket.emit('adminCmd',{cmd:'broadcast',data:rest}),
+        pin:    ()=>socket.emit('adminCmd',{cmd:'pin',data:rest}),
+        topic:  ()=>socket.emit('adminCmd',{cmd:'settopic',data:rest}),
+        welcome:()=>socket.emit('adminCmd',{cmd:'setwelcome',data:rest}),
+        filter: ()=>socket.emit('adminCmd',{cmd:'addfilter',data:t}),
+        unfilter:()=>socket.emit('adminCmd',{cmd:'remfilter',data:t}),
+        slow:   ()=>socket.emit('adminCmd',{cmd:'slowmode',data:p[1]||0}),
+        delmsg: ()=>socket.emit('adminCmd',{cmd:'deleteMsg',data:t}),
+    }
+    if (m[cmd]) m[cmd](); else toast(`Unknown command: /${cmd}`,'error')
+}
+
+// ═══════════════════════════════════════════════════════
+//  JOIN ROOM
+// ═══════════════════════════════════════════════════════
+$('formJoin').addEventListener('submit', e => {
+    e.preventDefault()
+    const room = $('roomInput').value.trim(); const pw = $('roomPassword').value
+    if (!room || !myName) return
+    $('passwordError').style.display='none'
+    socket.emit('enterRoom', { name:myName, room, password:pw, voidId:myVoidId })
+})
+
+let roomCheckT = null
+$('roomInput').addEventListener('input', () => {
+    clearTimeout(roomCheckT)
+    roomCheckT = setTimeout(()=>{ const r=$('roomInput').value.trim(); if(r) socket.emit('checkRoom',{room:r}) }, 400)
+})
+
+// ═══════════════════════════════════════════════════════
+//  CHAT MODE SWITCH
+// ═══════════════════════════════════════════════════════
+function switchToRoom(room) {
+    chatMode = 'room'; myRoom = room; dmPartner = null; activeGroup = null
+    $('chatDisplay').innerHTML = ''; clearTyping()
+    $('joinOverlay').style.display  = 'none'
+    $('chatScreen').style.display   = 'flex'
+    $('chPrefix').textContent = '#'
+    $('chName').textContent   = room
+    $('chBadge').style.display     = 'inline'
+    $('dmCallAudio').style.display  = 'none'
+    $('dmCallVideo').style.display  = 'none'
+    $('groupSettingsBtn').style.display = 'none'
+    $('msgInput').placeholder = `Message #${room}`
+    $('chatHeader').dataset.mode = 'room'
+    $('panelTitle').textContent  = 'Online'
+    $('chTopic').textContent = ''
+    $('topicBar').style.display = 'none'
+    $$('.room-item').forEach(el=>el.classList.toggle('room-item--active', el.dataset.room===room))
+    $$('.group-item').forEach(el=>el.classList.remove('group-item--active'))
+    $$('.friend-item').forEach(el=>el.classList.remove('friend-item--active'))
+}
+
+function switchToDm(voidId, name) {
+    chatMode = 'dm'; dmPartner = {voidId, name}; myRoom = ''; activeGroup = null
+    $('chatDisplay').innerHTML = ''; clearTyping()
+    $('joinOverlay').style.display  = 'none'
+    $('chatScreen').style.display   = 'flex'
+    $('chPrefix').textContent = '@'
+    $('chName').textContent   = name
+    $('chBadge').style.display     = 'none'
+    $('dmCallAudio').style.display  = 'flex'
+    $('dmCallVideo').style.display  = 'flex'
+    $('dmCallAudio').onclick = () => startCall(null, name, 'audio', voidId)
+    $('dmCallVideo').onclick = () => startCall(null, name, 'video', voidId)
+    $('groupSettingsBtn').style.display = 'none'
+    $('adminPanelBtn').style.display    = 'none'
+    $('msgInput').placeholder = `Message @${name}`
+    $('chatHeader').dataset.mode = 'dm'
+    $('panelTitle').textContent  = 'Info'
+    $('chTopic').textContent = ''
+    $('topicBar').style.display = 'none'
+    $('chLock').style.display   = 'none'
+    $('chAdminBadge').style.display = 'none'
+    $('chOwnerBadge').style.display = 'none'
+    $$('.room-item').forEach(el=>el.classList.remove('room-item--active'))
+    $$('.group-item').forEach(el=>el.classList.remove('group-item--active'))
+    $$('.friend-item').forEach(el=>el.classList.toggle('friend-item--active', el.dataset.voidId===voidId))
+    // Clear unread
+    dmUnread.delete(voidId); renderFriendList()
+    // Show DM partner in users panel
+    $('usersList').innerHTML = `<li class="user-item">
+      <div class="user-item__avatar" style="background:${avColor(name)}">${ini(name)}</div>
+      <div class="user-item__info"><span class="user-item__name">${esc(name)}</span>
+      <span class="user-item__status status--online">● Direct Message</span></div></li>`
+    $('onlineCount').textContent = '1'
+    socket.emit('openDm', { withVoidId: voidId })
+}
+
+function switchToGroup(group) {
+    chatMode = 'group'; activeGroup = group; myRoom = ''; dmPartner = null
+    $('chatDisplay').innerHTML = ''; clearTyping()
+    $('joinOverlay').style.display  = 'none'
+    $('chatScreen').style.display   = 'flex'
+    $('chPrefix').textContent = '⬡'
+    $('chName').textContent   = group.name
+    $('chBadge').style.display     = 'none'
+    $('dmCallAudio').style.display  = 'none'
+    $('dmCallVideo').style.display  = 'none'
+    $('groupSettingsBtn').style.display = 'flex'
+    $('msgInput').placeholder = `Message ${group.name}`
+    $('chatHeader').dataset.mode = 'group'
+    $('panelTitle').textContent  = 'Members'
+    if (group.topic) { $('topicBar').style.display='flex'; $('topicText').textContent=group.topic }
+    $('chLock').style.display = 'none'
+    // Admin / owner badges for group
+    const isGroupAdmin = groupRole === 'owner' || groupRole === 'admin'
+    $('adminPanelBtn').style.display = isGroupAdmin ? 'flex' : 'none'
+    $('chAdminBadge').style.display  = groupRole==='admin'  ? 'inline' : 'none'
+    $('chOwnerBadge').style.display  = groupRole==='owner'  ? 'inline' : 'none'
+    $$('.room-item').forEach(el=>el.classList.remove('room-item--active'))
+    $$('.friend-item').forEach(el=>el.classList.remove('friend-item--active'))
+    $$('.group-item').forEach(el=>el.classList.toggle('group-item--active', el.dataset.groupId===group.id))
+}
+
+// ═══════════════════════════════════════════════════════
+//  MESSAGE AREA INTERACTIONS
+// ═══════════════════════════════════════════════════════
+$('chatDisplay').addEventListener('click', e => {
+    const btn = e.target.closest('.msg-action-btn')
+    if (btn) {
+        const action=btn.dataset.action; const mid=btn.dataset.mid
+        if (action==='reply') setReply(mid, btn.dataset.name, btn.dataset.text)
+        else if (action==='react') openRxMenu(btn, mid)
+        else if (action==='del') {
+            if (chatMode==='room') socket.emit('adminCmd',{cmd:'deleteMsg',data:mid})
+            else if (chatMode==='group' && activeGroup) socket.emit('groupAdminCmd',{groupId:activeGroup.id,cmd:'deleteMsg',target:mid})
+        }
+        return
+    }
+    const rx = e.target.closest('.reaction-btn')
+    if (rx) {
+        const li = rx.closest('.msg'); if (!li) return
+        if (chatMode==='room')  socket.emit('reaction',{msgId:li.dataset.msgId,emoji:rx.dataset.emoji})
+        else if (chatMode==='group' && activeGroup) socket.emit('groupReaction',{groupId:activeGroup.id,msgId:li.dataset.msgId,emoji:rx.dataset.emoji})
+    }
+})
+
+// ── Reaction quick-menu ───────────────────────────────
+let rxMenu = null
+function openRxMenu(anchor, msgId) {
+    rxMenu?.remove(); rxMenu=null
+    const quick=['👍','👎','❤️','😂','😮','😢','🔥','✅']
+    rxMenu=document.createElement('div'); rxMenu.className='reaction-menu'
+    quick.forEach(emoji=>{
+        const b=document.createElement('button'); b.className='reaction-menu__item'; b.textContent=emoji
+        b.addEventListener('click',()=>{
+            if(chatMode==='room') socket.emit('reaction',{msgId,emoji})
+            else if(chatMode==='group'&&activeGroup) socket.emit('groupReaction',{groupId:activeGroup.id,msgId,emoji})
+            rxMenu.remove(); rxMenu=null
+        })
+        rxMenu.appendChild(b)
+    })
+    document.body.appendChild(rxMenu)
+    const r=anchor.getBoundingClientRect()
+    rxMenu.style.top=`${r.top-52}px`; rxMenu.style.left=`${Math.max(4,r.left-140)}px`
+    setTimeout(()=>document.addEventListener('click',()=>{rxMenu?.remove();rxMenu=null},{once:true}),50)
+}
+
+// ── Reply ─────────────────────────────────────────────
+function setReply(id,name,text) {
+    replyingTo={id,name,text}
+    $('replyToName').textContent=name
+    $('replyToText').textContent=text.slice(0,80)+(text.length>80?'…':'')
+    $('replyPreview').style.display='flex'; $('msgInput').focus()
+}
+function clearReply() { replyingTo=null; $('replyPreview').style.display='none' }
+$('cancelReply').addEventListener('click', clearReply)
+
+// ── Search ────────────────────────────────────────────
+$('searchBtn').addEventListener('click',()=>{ const s=$('searchBar'); const show=s.style.display==='none'; s.style.display=show?'flex':'none'; if(show) $('searchInput').focus(); else{$('searchInput').value='';clearSearch()} })
+$('searchClose').addEventListener('click',()=>{ $('searchBar').style.display='none'; $('searchInput').value=''; clearSearch() })
+$('searchInput').addEventListener('input',()=>{
+    const q=$('searchInput').value.toLowerCase().trim()
+    $('chatDisplay').querySelectorAll('.msg').forEach(el=>{
+        if(!q){el.style.opacity='1';el.classList.remove('msg--highlight');return}
+        const hit=(el.querySelector('.msg__text')?.textContent.toLowerCase().includes(q)||el.querySelector('.msg__name')?.textContent.toLowerCase().includes(q))
+        el.style.opacity=hit?'1':'0.22'; el.classList.toggle('msg--highlight',hit)
+    })
+})
+function clearSearch() { $('chatDisplay').querySelectorAll('.msg').forEach(el=>{el.style.opacity='1';el.classList.remove('msg--highlight')}) }
+function clearTyping() { typingUsers.clear(); $('activityBar').innerHTML='' }
+
+// ── Scroll ────────────────────────────────────────────
+function scrollBottom(smooth=false) { const d=$('chatDisplay'); d.scrollTo({top:d.scrollHeight,behavior:smooth?'smooth':'instant'}) }
+function appendMsg(data) {
+    const el=buildMsgEl(data); $('chatDisplay').appendChild(el)
+    const d=$('chatDisplay'); if(d.scrollHeight-d.scrollTop-d.clientHeight<180) scrollBottom(true)
+}
+
+// ── Attach ────────────────────────────────────────────
+$('attachBtn').addEventListener('click',()=>{ const u=prompt('Paste an image URL:'); if(u?.trim()){$('msgInput').value+=(($('msgInput').value?' ':''))+u.trim();$('msgInput').focus()} })
+
+// ── Toggle users ──────────────────────────────────────
+$('toggleUsersBtn').addEventListener('click',()=>$('usersPanel').classList.toggle('users-panel--hidden'))
+
+// ── Pinned / Topic bars ───────────────────────────────
+$('pinnedClose').addEventListener('click',()=>$('pinnedBar').style.display='none')
+
+// ═══════════════════════════════════════════════════════
+//  RENDER SIDEBAR LISTS
+// ═══════════════════════════════════════════════════════
+function renderRoomList(rooms) {
+    const ul = $('roomList'); ul.innerHTML=''
+    if (!rooms.length) { ul.innerHTML='<li class="item-empty">No active channels</li>'; return }
+    rooms.forEach(room=>{
+        const li=document.createElement('li'); li.className=`room-item${room===myRoom?' room-item--active':''}`; li.dataset.room=room
+        li.innerHTML=`<span class="room-hash">#</span><span>${esc(room)}</span>`
+        li.addEventListener('click',()=>{ if(room===myRoom&&chatMode==='room') return; pendingRoomSwitch=room; socket.emit('checkRoom',{room}) })
+        ul.appendChild(li)
+    })
+}
+
+function renderGroupList() {
+    const ul=$('groupList'); ul.innerHTML=''
+    if (!myGroups.length) { ul.innerHTML='<li class="item-empty">No groups yet</li>'; return }
+    myGroups.forEach(g=>{
+        const li=document.createElement('li'); li.className=`group-item${activeGroup?.id===g.id?' group-item--active':''}`; li.dataset.groupId=g.id
+        const myMembership = (window._groupRoles||{})[g.id] || 'member'
+        li.innerHTML=`<span class="group-hex" style="color:${g.color}">⬡</span>
+          <div class="group-item__info"><span class="group-item__name">${esc(g.name)}</span>
+          <span class="group-item__role">${myMembership}</span></div>`
+        li.addEventListener('click',()=>joinGroupChat(g))
+        ul.appendChild(li)
+    })
+}
+
+function joinGroupChat(g) {
+    socket.emit('joinGroup', { groupId: g.id, password: '' })
+}
+
+function renderFriendList() {
+    const ul=$('friendList'); ul.innerHTML=''
+    if (!myFriends.length) { ul.innerHTML='<li class="item-empty">No friends yet</li>'; return }
+    myFriends.forEach(f=>{
+        const unread = dmUnread.get(f.voidId)||0
+        const li=document.createElement('li')
+        li.className=`friend-item${dmPartner?.voidId===f.voidId?' friend-item--active':''}`
+        li.dataset.voidId=f.voidId; li.dataset.name=f.name
+        const dotClass=f.online?'friend-dot--online':''
+        li.innerHTML=`<span class="friend-dot ${dotClass}"></span>
+          <span class="friend-name">${esc(f.name)}</span>
+          ${unread?`<span class="friend-unread">${unread}</span>`:''}
+          <button class="btn-icon friend-dm-btn" title="Message">💬</button>`
+        li.addEventListener('click',()=>switchToDm(f.voidId, f.name))
+        ul.appendChild(li)
+    })
+}
+
+// ═══════════════════════════════════════════════════════
+//  CREATE / JOIN MODALS
+// ═══════════════════════════════════════════════════════
+// Channels
+$('createRoomBtn').addEventListener('click',()=>$('createRoomModal').style.display='flex')
+$('cancelCreate').addEventListener('click', ()=>$('createRoomModal').style.display='none')
+$('closeCreateModal').addEventListener('click',()=>$('createRoomModal').style.display='none')
+$('createRoomForm').addEventListener('submit',e=>{
+    e.preventDefault()
+    const room=$('newRoomName').value.trim(); const pw=$('newRoomPassword').value; if(!room) return
+    socket.emit('createRoom',{room,password:pw})
+    $('createRoomModal').style.display='none'; $('newRoomName').value=''; $('newRoomPassword').value=''
+})
+
+// Groups
+$('createGroupBtn').addEventListener('click',()=>$('createGroupModal').style.display='flex')
+$('cancelCreateGroup').addEventListener('click',()=>$('createGroupModal').style.display='none')
+$('closeCreateGroupModal').addEventListener('click',()=>$('createGroupModal').style.display='none')
+$('createGroupForm').addEventListener('submit',e=>{
+    e.preventDefault()
+    const name=$('newGroupName').value.trim(); if(!name) return
+    socket.emit('createGroup',{name,desc:$('newGroupDesc').value.trim(),password:$('newGroupPassword').value,isPrivate:$('newGroupPrivate').checked})
+    $('createGroupModal').style.display='none'
+    $('newGroupName').value=''; $('newGroupDesc').value=''; $('newGroupPassword').value=''; $('newGroupPrivate').checked=false
+})
+
+// ── Group Settings Modal ──────────────────────────────
+$('groupSettingsBtn').addEventListener('click',()=>openGroupSettings())
+$('adminPanelBtn').addEventListener('click',()=>{ if(chatMode==='group') openGroupSettings(); else openAdminPanel() })
+$('sideAdminBtn').addEventListener('click', ()=>openAdminPanel())
+$('closeGroupSettings').addEventListener('click',()=>$('groupSettingsModal').style.display='none')
+
+function openGroupSettings() {
+    if (!activeGroup) return
+    $('gSettingsName').textContent=activeGroup.name
+    $('groupSettingsModal').style.display='flex'
+    socket.emit('joinGroup',{groupId:activeGroup.id}) // refresh members
+    // Populate friend invite list
+    const fl=$('gFriendInviteList'); fl.innerHTML=''
+    if (!myFriends.length) { fl.innerHTML='<p class="item-empty">No friends to invite.</p>'; return }
+    myFriends.forEach(f=>{
+        const row=document.createElement('div'); row.className='g-friend-row'
+        row.innerHTML=`<div class="user-item__avatar" style="background:${avColor(f.name)};width:26px;height:26px;font-size:.62rem;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff">${ini(f.name)}</div>
+          <span class="g-friend-row__name">${esc(f.name)}</span>
+          <button class="btn-primary" style="padding:4px 10px;font-size:.75rem" data-vid="${f.voidId}">Invite</button>`
+        row.querySelector('button').addEventListener('click',()=>{
+            socket.emit('inviteToGroup',{groupId:activeGroup.id,toVoidId:f.voidId})
+            toast(`Invited ${f.name}`,'success')
+        })
+        fl.appendChild(row)
+    })
+}
+
+// Group settings tabs
+$$('[data-gtab]').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+        $$('[data-gtab]').forEach(t=>t.classList.remove('admin-tab--active'))
+        $$('[id^="gTab-"]').forEach(p=>p.style.display='none')
+        tab.classList.add('admin-tab--active')
+        $(`gTab-${tab.dataset.gtab}`).style.display='flex'
+    })
 })
 
 $('gTopicBtn').addEventListener('click',()=>{ const t=$('gTopicInput').value.trim(); if(!t||!activeGroup) return; socket.emit('groupAdminCmd',{groupId:activeGroup.id,cmd:'setTopic',data:t}); $('gTopicInput').value=''; $('groupSettingsModal').style.display='none' })
