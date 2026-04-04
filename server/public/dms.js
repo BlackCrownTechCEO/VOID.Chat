@@ -161,6 +161,22 @@ window.socket.on('dmHistory', async ({ withVoidId, messages }) => {
 })
 
 window.socket.on('dm', async ({ msg, withVoidId }) => {
+    if (msg.voidFlash) {
+        // VoidFlash: don't decrypt here — voidflashes.js handles it on tap
+        if (!dmConvos[withVoidId]) dmConvos[withVoidId] = []
+        dmConvos[withVoidId].push(msg)
+        if (!dmMeta[withVoidId]) dmMeta[withVoidId] = { name: msg.name }
+        if (activeDm === withVoidId) {
+            const display = document.getElementById('chatDisplay')
+            display.appendChild(window.buildMsgEl(msg))
+            display.scrollTo({ top: display.scrollHeight, behavior: 'smooth' })
+        } else {
+            dmUnreads[withVoidId] = (dmUnreads[withVoidId] || 0) + 1
+            updateDmsTabDot()
+        }
+        renderDmList()
+        return
+    }
     if (msg.ciphertext && window.VoidCrypto) {
         const pubKey = _dmPubKeys.get(withVoidId)
         if (pubKey) {
@@ -199,3 +215,7 @@ window.socket.on('dmNotification', ({ fromVoidId, fromName, preview }) => {
 })
 
 window.socket.on('dmError', ({ message }) => window.showToast(message, 'error'))
+
+// ── Expose internals for voidflashes.js ──────────────
+window._getActiveDm  = () => activeDm
+window._getDmPubKey  = vid => _dmPubKeys.get(vid) || null

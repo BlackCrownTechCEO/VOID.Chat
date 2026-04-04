@@ -293,6 +293,13 @@ function buildMsgEl(data) {
     const isMine = name === myName
     const li = document.createElement('li')
 
+    // VoidFlash messages render differently
+    if (data.voidFlash && window.renderVoidFlash) {
+        li.dataset.msgId = id
+        window.renderVoidFlash(data, li)
+        return li
+    }
+
     if (type === 'system') {
         li.className = 'msg msg--system'
         li.innerHTML = `<span class="msg__system-text">${formatText(text)}</span>`
