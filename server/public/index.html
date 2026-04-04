@@ -542,6 +542,7 @@
         <button class="admin-nav-item" data-anav="mod">🛡 Mod Tools</button>
         <button class="admin-nav-item" data-anav="audit">📋 Audit</button>
         <button class="admin-nav-item" data-anav="cmds">📋 Commands</button>
+        <button class="admin-nav-item admin-nav-item--owner" data-anav="owner" id="ownerNavItem" style="display:none">⭐ Owner</button>
       </nav>
       <!-- Right content -->
       <div class="admin-content">
@@ -661,6 +662,150 @@
           </div>
         </div>
       </div>
+
+        <!-- Owner Panel (server owner only) -->
+        <div class="admin-section" id="adminTab-owner" style="display:none">
+          <div class="owner-sub-tabs">
+            <button class="owner-sub-tab owner-sub-tab--active" data-osub="motd">MOTD</button>
+            <button class="owner-sub-tab" data-osub="announce">Announce</button>
+            <button class="owner-sub-tab" data-osub="bans">Bans</button>
+            <button class="owner-sub-tab" data-osub="stats">Stats</button>
+            <button class="owner-sub-tab" data-osub="filters">Filters</button>
+            <button class="owner-sub-tab" data-osub="settings">Settings</button>
+            <button class="owner-sub-tab" data-osub="audit">Owner Audit</button>
+            <button class="owner-sub-tab" data-osub="transfer">Transfer</button>
+          </div>
+
+          <!-- MOTD -->
+          <div class="owner-sub-section owner-sub-section--active" id="ownerSub-motd">
+            <div class="admin-card">
+              <label class="admin-card__label">📢 Message of the Day</label>
+              <textarea id="ownerMotdInput" rows="3" placeholder="Welcome message shown to all users on connect…" style="resize:vertical;width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px;color:var(--tx1);font-size:.85rem;outline:none"></textarea>
+              <button class="btn-primary" id="ownerMotdBtn" style="align-self:flex-start;margin-top:6px">Update MOTD</button>
+            </div>
+          </div>
+
+          <!-- Announce -->
+          <div class="owner-sub-section" id="ownerSub-announce">
+            <div class="admin-card">
+              <label class="admin-card__label">📣 Broadcast Message</label>
+              <textarea id="ownerAnnounceInput" rows="3" placeholder="Broadcast to all connected users…" style="resize:vertical;width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px;color:var(--tx1);font-size:.85rem;outline:none"></textarea>
+              <div style="margin-top:8px">
+                <label class="admin-card__label" style="margin-bottom:4px">Target</label>
+                <select id="ownerAnnounceTarget" style="width:100%;padding:6px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1)">
+                  <option value="all">All Rooms</option>
+                </select>
+              </div>
+              <label class="check-label" style="margin-top:8px"><input type="checkbox" id="ownerAnnouncePinned"/> Pin announcement</label>
+              <label class="check-label" style="margin-top:6px"><input type="checkbox" id="ownerAnnounceScheduled"/> Schedule</label>
+              <input type="datetime-local" id="ownerAnnounceTime" style="margin-top:4px;width:100%;padding:6px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1)"/>
+              <div class="row-gap" style="margin-top:8px">
+                <button class="btn-primary" id="ownerAnnounceBtn">Send Now</button>
+                <button class="btn-secondary" id="ownerScheduleBtn">Schedule</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bans -->
+          <div class="owner-sub-section" id="ownerSub-bans">
+            <div class="admin-card">
+              <label class="admin-card__label">🚫 Global Ban / Unban</label>
+              <div class="row-gap">
+                <input type="text" id="ownerBanInput" placeholder="VABCD123" maxlength="8" autocomplete="off" style="text-transform:uppercase;flex:1"/>
+                <input type="text" id="ownerBanReason" placeholder="Reason" style="flex:2"/>
+                <button class="btn-primary admin-tool-btn--danger" id="ownerGlobalBanBtn">Ban</button>
+                <button class="btn-secondary" id="ownerGlobalUnbanBtn">Unban</button>
+              </div>
+              <input type="text" id="ownerBanSearch" placeholder="Search bans…" style="margin-top:8px;width:100%;padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem"/>
+              <div id="ownerBanList" class="admin-user-list" style="margin-top:6px"></div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="owner-sub-section" id="ownerSub-stats">
+            <div class="admin-card">
+              <label class="admin-card__label">📊 Server Stats</label>
+              <div class="owner-stats" id="ownerStatsCards"></div>
+              <div id="ownerSparkline" style="margin:8px 0"></div>
+              <input type="text" id="ownerUserSearch" placeholder="Search users…" style="width:100%;padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem;margin-bottom:6px"/>
+              <div style="font-size:.75rem;color:var(--tx3);font-weight:700;margin-bottom:4px">Channels</div>
+              <div id="ownerRoomList"></div>
+              <div style="font-size:.75rem;color:var(--tx3);font-weight:700;margin:8px 0 4px">Online Users</div>
+              <div id="ownerUserList" class="admin-user-list"></div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="owner-sub-section" id="ownerSub-filters">
+            <div class="admin-card">
+              <label class="admin-card__label">🚫 Word Filters</label>
+              <p style="font-size:.78rem;color:var(--tx2);margin-bottom:8px">Server-wide — words replaced with █ in all channels.</p>
+              <div class="row-gap">
+                <input type="text" id="ownerFilterInput" placeholder="word to filter" style="flex:1"/>
+                <button class="btn-primary" id="ownerFilterAddBtn">Add</button>
+              </div>
+              <div id="ownerFilterChips" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+            </div>
+          </div>
+
+          <!-- Settings -->
+          <div class="owner-sub-section" id="ownerSub-settings">
+            <div class="admin-card">
+              <label class="admin-card__label">⚙ Server Settings</label>
+              <div class="input-group">
+                <label>Server Name</label>
+                <input type="text" id="cfgServerName" placeholder="VOID"/>
+              </div>
+              <div class="input-group" style="margin-top:8px">
+                <label>Max Users (0 = unlimited)</label>
+                <input type="number" id="cfgMaxUsers" min="0" placeholder="0" style="width:100px"/>
+              </div>
+              <div class="input-group" style="margin-top:8px">
+                <label>Default Channel</label>
+                <input type="text" id="cfgDefaultChannel" placeholder="general"/>
+              </div>
+              <div class="input-group" style="margin-top:8px">
+                <label>Welcome Message</label>
+                <input type="text" id="cfgWelcomeMsg" placeholder="Welcome to VOID…"/>
+              </div>
+              <label class="check-label" style="margin-top:8px"><input type="checkbox" id="cfgAllowGuestNames"/> Allow guest names</label>
+              <label class="check-label" style="margin-top:6px"><input type="checkbox" id="cfgRegistrationOpen" checked/> Registration open</label>
+              <label class="check-label" style="margin-top:6px"><input type="checkbox" id="cfgMaintenance"/> Maintenance mode</label>
+              <button class="btn-primary" id="ownerSaveConfigBtn" style="margin-top:10px;align-self:flex-start">Save Settings</button>
+            </div>
+          </div>
+
+          <!-- Owner Audit -->
+          <div class="owner-sub-section" id="ownerSub-audit">
+            <div class="admin-card">
+              <label class="admin-card__label">📋 Owner Audit Log</label>
+              <div class="row-gap" style="margin-bottom:8px">
+                <select id="ownerAuditFilter" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem">
+                  <option value="">All Events</option>
+                  <option value="globalBan">Bans</option>
+                  <option value="announce">Announces</option>
+                  <option value="maintenanceOn">Maintenance</option>
+                  <option value="transferOwnership">Transfers</option>
+                </select>
+                <input type="text" id="ownerAuditSearch" placeholder="Search…" style="flex:1;padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem"/>
+                <button class="btn-secondary" id="ownerAuditRefreshBtn">🔄</button>
+              </div>
+              <div id="ownerAuditLog" class="audit-log" style="max-height:300px;overflow-y:auto"></div>
+            </div>
+          </div>
+
+          <!-- Transfer -->
+          <div class="owner-sub-section" id="ownerSub-transfer">
+            <div class="admin-card">
+              <label class="admin-card__label">🔁 Transfer Ownership</label>
+              <p style="font-size:.82rem;color:var(--tx2);margin-bottom:10px">Permanently transfers your owner status. <strong style="color:var(--red)">Cannot be undone.</strong></p>
+              <div class="row-gap">
+                <input type="text" id="ownerTransferInput" placeholder="VABCD123" maxlength="8" autocomplete="off" style="text-transform:uppercase;flex:1"/>
+                <button class="btn-primary admin-tool-btn--danger" id="ownerTransferBtn">Transfer</button>
+              </div>
+            </div>
+          </div>
+        </div>
     </div>
   </div>
 </div>
@@ -807,169 +952,6 @@
   </div>
 </div>
 
-<!-- Owner Panel -->
-<div class="modal-overlay" id="ownerModal" style="display:none">
-  <div class="modal modal--wide">
-    <div class="sheet-handle"></div>
-    <div class="modal__hdr">
-      <h3>⭐ Owner Panel</h3>
-      <button class="btn-icon" id="closeOwnerModal">✕</button>
-    </div>
-    <div class="admin-tabs owner-tabs-row" style="flex-wrap:wrap;gap:2px">
-      <button class="admin-tab owner-tab owner-tab--active" data-otab="motd">MOTD</button>
-      <button class="admin-tab owner-tab" data-otab="announce">Announce</button>
-      <button class="admin-tab owner-tab" data-otab="bans">Bans</button>
-      <button class="admin-tab owner-tab" data-otab="stats">Stats</button>
-      <button class="admin-tab owner-tab" data-otab="filters">Filters</button>
-      <button class="admin-tab owner-tab" data-otab="settings">Settings</button>
-      <button class="admin-tab owner-tab" data-otab="audit">Audit</button>
-      <button class="admin-tab owner-tab" data-otab="transfer">Transfer</button>
-    </div>
-
-    <!-- MOTD -->
-    <div class="admin-panel owner-panel" id="ownerTab-motd">
-      <div class="input-group">
-        <label>Message of the Day</label>
-        <textarea id="ownerMotdInput" rows="3" placeholder="Welcome message shown to all users on connect…" style="resize:vertical"></textarea>
-      </div>
-      <div class="modal__actions">
-        <button class="btn-primary" id="ownerMotdBtn">Update MOTD</button>
-      </div>
-    </div>
-
-    <!-- Announce -->
-    <div class="admin-panel owner-panel" id="ownerTab-announce" style="display:none">
-      <div class="input-group">
-        <label>Message</label>
-        <textarea id="ownerAnnounceInput" rows="3" placeholder="Broadcast to all connected users…" style="resize:vertical"></textarea>
-      </div>
-      <div class="input-group" style="margin-top:8px">
-        <label>Target</label>
-        <select id="ownerAnnounceTarget" style="width:100%;padding:6px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1)">
-          <option value="all">All Rooms</option>
-        </select>
-      </div>
-      <div class="input-group" style="margin-top:8px">
-        <label class="check-label"><input type="checkbox" id="ownerAnnouncePinned" /> Pin announcement</label>
-      </div>
-      <div class="input-group" style="margin-top:8px">
-        <label class="check-label"><input type="checkbox" id="ownerAnnounceScheduled" /> Schedule</label>
-        <input type="datetime-local" id="ownerAnnounceTime" style="margin-top:4px;width:100%;padding:6px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1)" />
-      </div>
-      <div class="modal__actions">
-        <button class="btn-primary" id="ownerAnnounceBtn">Send Now</button>
-        <button class="btn-secondary" id="ownerScheduleBtn">Add to Queue</button>
-      </div>
-      <div id="ownerQueueList" style="margin-top:10px;font-size:.76rem;color:var(--tx2)"></div>
-    </div>
-
-    <!-- Bans -->
-    <div class="admin-panel owner-panel" id="ownerTab-bans" style="display:none">
-      <div class="input-group" style="margin-bottom:8px">
-        <div class="row-gap">
-          <input type="text" id="ownerBanInput" placeholder="VABCD123" maxlength="8"
-            autocomplete="off" style="text-transform:uppercase;flex:1" />
-          <input type="text" id="ownerBanReason" placeholder="Reason (optional)" style="flex:2" />
-          <button class="btn-primary admin-tool-btn--danger" id="ownerGlobalBanBtn">Ban</button>
-          <button class="btn-secondary" id="ownerGlobalUnbanBtn">Unban</button>
-        </div>
-      </div>
-      <input type="text" id="ownerBanSearch" placeholder="Search bans…" style="width:100%;padding:5px 8px;margin-bottom:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem" />
-      <div id="ownerBanList" class="admin-user-list"></div>
-    </div>
-
-    <!-- Stats -->
-    <div class="admin-panel owner-panel" id="ownerTab-stats" style="display:none">
-      <div class="owner-stats" id="ownerStatsCards"></div>
-      <div id="ownerSparkline" style="margin:10px 0"></div>
-      <input type="text" id="ownerUserSearch" placeholder="Search users by name or VOID ID…"
-        style="width:100%;padding:5px 8px;margin-bottom:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem" />
-      <div style="font-size:.78rem;color:var(--tx2);font-weight:700;margin-bottom:6px">Channels</div>
-      <div id="ownerRoomList"></div>
-      <div style="margin-top:12px;font-size:.78rem;color:var(--tx2);font-weight:700;margin-bottom:6px">Online Users</div>
-      <div id="ownerUserList" class="admin-user-list"></div>
-    </div>
-
-    <!-- Filters -->
-    <div class="admin-panel owner-panel" id="ownerTab-filters" style="display:none">
-      <p style="font-size:.78rem;color:var(--tx2);margin-bottom:10px">Server-wide content filter — words are replaced with █ in all channels.</p>
-      <div class="input-group">
-        <label>Add word</label>
-        <div class="row-gap">
-          <input type="text" id="ownerFilterInput" placeholder="word to filter" style="flex:1" />
-          <button class="btn-primary" id="ownerFilterAddBtn">Add</button>
-        </div>
-      </div>
-      <div id="ownerFilterChips" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px"></div>
-    </div>
-
-    <!-- Settings -->
-    <div class="admin-panel owner-panel" id="ownerTab-settings" style="display:none">
-      <div class="input-group">
-        <label>Server Name</label>
-        <input type="text" id="cfgServerName" maxlength="40" placeholder="VOID" />
-      </div>
-      <div class="input-group" style="margin-top:8px">
-        <label>Max Users <span class="label-badge--optional">0 = unlimited</span></label>
-        <input type="number" id="cfgMaxUsers" min="0" placeholder="0" style="width:100px" />
-      </div>
-      <div class="input-group" style="margin-top:8px">
-        <label>Default Channel</label>
-        <input type="text" id="cfgDefaultChannel" maxlength="30" placeholder="general" />
-      </div>
-      <div class="input-group" style="margin-top:8px">
-        <label>Welcome DM <span class="label-badge--optional">sent on first join</span></label>
-        <textarea id="cfgWelcomeMsg" rows="2" placeholder="Welcome to VOID!" style="resize:vertical"></textarea>
-      </div>
-      <div class="input-group" style="margin-top:8px">
-        <label class="check-label"><input type="checkbox" id="cfgAllowGuestNames" /> Allow custom display names</label>
-      </div>
-      <div class="input-group" style="margin-top:4px">
-        <label class="check-label"><input type="checkbox" id="cfgRegistrationOpen" /> Allow new registrations</label>
-      </div>
-      <div class="input-group" style="margin-top:8px">
-        <label class="check-label">
-          <input type="checkbox" id="cfgMaintenance" /> Maintenance Mode
-          <span style="color:var(--tx3);font-size:.72rem;margin-left:4px">— blocks new logins</span>
-        </label>
-      </div>
-      <div class="modal__actions" style="margin-top:12px">
-        <button class="btn-primary" id="ownerSaveConfigBtn">Save Settings</button>
-      </div>
-    </div>
-
-    <!-- Audit -->
-    <div class="admin-panel owner-panel" id="ownerTab-audit" style="display:none">
-      <div class="row-gap" style="margin-bottom:8px">
-        <select id="ownerAuditFilter" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem">
-          <option value="">All Events</option>
-          <option value="globalBan">Bans</option>
-          <option value="globalUnban">Unbans</option>
-          <option value="announce">Announces</option>
-          <option value="maintenanceOn">Maintenance</option>
-          <option value="transferOwnership">Transfers</option>
-        </select>
-        <input type="text" id="ownerAuditSearch" placeholder="Search…" style="flex:1;padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem" />
-        <button class="btn-secondary" id="ownerAuditRefreshBtn">🔄</button>
-      </div>
-      <div id="ownerAuditLog" class="audit-log" style="max-height:340px;overflow-y:auto"></div>
-    </div>
-
-    <!-- Transfer -->
-    <div class="admin-panel owner-panel" id="ownerTab-transfer" style="display:none">
-      <p style="font-size:.84rem;color:var(--tx2);margin-bottom:12px">Transfer server ownership to another online user. <strong style="color:var(--red)">This permanently removes your owner status.</strong></p>
-      <div class="input-group">
-        <label>Target VOID ID (must be online)</label>
-        <input type="text" id="ownerTransferInput" placeholder="VABCD123" maxlength="8"
-          autocomplete="off" style="text-transform:uppercase" />
-      </div>
-      <div class="modal__actions" style="margin-top:12px">
-        <button class="btn-primary admin-tool-btn--danger" id="ownerTransferBtn">Transfer Ownership</button>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- ══════════════════════════════════════════════
      CALL UI

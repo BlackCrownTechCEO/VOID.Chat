@@ -1178,6 +1178,7 @@ window.startCall = startCall
 
 // ── Expose globals for feature modules ───────────────────
 window.socket      = socket
+window.openAdminPanel = openAdminPanel
 window.showToast   = showToast
 window.avatarColor = avatarColor
 window.initials    = initials
@@ -1282,6 +1283,8 @@ socket.on('ownerStatus', ({ isOwner }) => {
     window.amOwner = isOwner
     $('ownerPanelBtn').style.display  = isOwner ? 'block' : 'none'
     $('claimOwnerBtn').style.display  = isOwner ? 'none'  : 'block'
+    const ownerNavItem = $('ownerNavItem')
+    if (ownerNavItem) ownerNavItem.style.display = isOwner ? 'flex' : 'none'
 })
 
 // ── adminSuccess ──────────────────────────────────────────

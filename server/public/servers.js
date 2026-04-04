@@ -277,21 +277,33 @@ let ownerAuditCache = []
 let currentMaintenance = false
 
 // ── Open / close ──────────────────────────────────────────
-document.getElementById('ownerPanelBtn').addEventListener('click', () => {
-    document.getElementById('ownerModal').style.display = 'flex'
+// ── Owner Panel — now lives inside Admin Panel as a tab ───
+function openOwnerTab() {
+    const adminModal = document.getElementById('adminModal')
+    if (adminModal.style.display === 'none') {
+        if (window.openAdminPanel) window.openAdminPanel()
+        else adminModal.style.display = 'flex'
+    }
+    document.querySelectorAll('#adminModal .admin-nav-item').forEach(i => i.classList.remove('admin-nav-item--active'))
+    document.querySelectorAll('#adminModal .admin-section').forEach(s => s.style.display = 'none')
+    const ownerNavItem = document.getElementById('ownerNavItem')
+    if (ownerNavItem) ownerNavItem.classList.add('admin-nav-item--active')
+    const ownerSection = document.getElementById('adminTab-owner')
+    if (ownerSection) ownerSection.style.display = 'flex'
     window.socket.emit('ownerCmd', { cmd: 'getStats' })
-})
-document.getElementById('closeOwnerModal').addEventListener('click', () =>
-    document.getElementById('ownerModal').style.display = 'none')
+}
 
-// ── Tab switching (with lazy-load per tab) ────────────────
-document.querySelectorAll('.owner-tab').forEach(tab => {
+document.getElementById('ownerPanelBtn').addEventListener('click', openOwnerTab)
+
+// ── Owner sub-tab switching ───────────────────────────────
+document.querySelectorAll('.owner-sub-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-        document.querySelectorAll('.owner-tab').forEach(t => t.classList.remove('owner-tab--active'))
-        document.querySelectorAll('.owner-panel').forEach(p => p.style.display = 'none')
-        tab.classList.add('owner-tab--active')
-        const panel = tab.dataset.otab
-        document.getElementById(`ownerTab-${panel}`).style.display = 'block'
+        document.querySelectorAll('.owner-sub-tab').forEach(t => t.classList.remove('owner-sub-tab--active'))
+        document.querySelectorAll('.owner-sub-section').forEach(s => s.classList.remove('owner-sub-section--active'))
+        tab.classList.add('owner-sub-tab--active')
+        const panel = tab.dataset.osub
+        const section = document.getElementById(`ownerSub-${panel}`)
+        if (section) section.classList.add('owner-sub-section--active')
         if (panel === 'stats')    window.socket.emit('ownerCmd', { cmd: 'getStats' })
         if (panel === 'bans')     window.socket.emit('ownerCmd', { cmd: 'getBans' })
         if (panel === 'filters')  window.socket.emit('ownerCmd', { cmd: 'getFilters' })
@@ -467,7 +479,7 @@ document.getElementById('ownerTransferBtn').addEventListener('click', () => {
     if (!confirm(`Transfer server ownership to ${vid}?\n\nThis will permanently remove YOUR owner status. This cannot be undone.`)) return
     window.socket.emit('ownerCmd', { cmd: 'transferOwnership', targetVoid: vid })
     document.getElementById('ownerTransferInput').value = ''
-    document.getElementById('ownerModal').style.display = 'none'
+    document.getElementById('adminModal').style.display = 'none'
 })
 
 // ── Socket events ─────────────────────────────────────────
@@ -525,7 +537,7 @@ window.socket.on('ownerAuditLog', ({ entries }) => {
 
 window.socket.on('ownerAuditEntry', ({ entry }) => {
     const el = document.getElementById('ownerAuditLog')
-    if (el && document.getElementById('ownerTab-audit').style.display !== 'none') {
+    if (el && document.getElementById('ownerSub-audit')?.classList.contains('owner-sub-section--active')) {
         el.insertBefore(renderAuditEntry(entry), el.firstChild)
     }
 })
