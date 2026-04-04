@@ -1064,11 +1064,17 @@
 
   <!-- VOID Rings row -->
   <div class="void-rings" id="voidRings">
-    <div class="void-ring-wrap">
+    <div class="void-ring-wrap void-ring-wrap--static">
       <button class="void-ring void-ring--add" id="postVoidBtn">
         <span class="void-ring__av void-ring__av--add">＋</span>
       </button>
       <span class="void-ring__name">My VOID</span>
+    </div>
+    <div class="void-ring-wrap void-ring-wrap--static">
+      <button class="void-ring void-ring--flash-post" id="postFlashBtn">
+        <span class="void-ring__av void-ring__av--flash">⚡</span>
+      </button>
+      <span class="void-ring__name">FlashVoid</span>
     </div>
   </div>
 
@@ -1084,10 +1090,23 @@
     <div class="void-viewer__body" id="voidViewerBody"></div>
   </div>
 
+  <!-- Flash Viewer (full-screen over feed, for FlashVoids) -->
+  <div class="void-viewer void-viewer--flash" id="flashViewer" style="display:none">
+    <div class="void-viewer__bar-wrap"><div class="void-viewer__bar" id="flashViewerBar"></div></div>
+    <button class="void-viewer__close btn-icon" id="closeFlashViewer">✕</button>
+    <div class="void-viewer__body" id="flashViewerBody"></div>
+    <div class="vf-burning" id="flashViewerBurning" style="display:none">🔥 Burning…</div>
+    <div class="flash-viewer__e2e">⚡ FlashVoid · deletes after view</div>
+  </div>
+
   <!-- VOID Composer (bottom sheet) -->
   <div class="void-composer" id="voidComposer" style="display:none">
     <div class="sheet-handle"></div>
     <h4 class="void-composer__title">Post a VOID</h4>
+    <div class="composer-media-preview" id="voidMediaPreview" style="display:none">
+      <img id="voidMediaImg" src="" alt="" class="composer-media-img">
+      <button class="btn-icon composer-media-remove" id="voidMediaRemove">✕</button>
+    </div>
     <textarea class="void-composer__input" id="voidComposerInput"
       maxlength="280" placeholder="What's your VOID today?"></textarea>
     <div class="void-composer__expiry" id="voidExpiryOpts">
@@ -1096,8 +1115,36 @@
       <button class="seg-btn" data-expiry="86400000">24h</button>
     </div>
     <div class="modal__actions">
+      <button class="btn-icon" id="voidMediaBtn" title="Add image">🖼</button>
+      <input type="file" id="voidMediaPicker" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none">
       <button class="btn-secondary" id="cancelVoidComposer">Cancel</button>
       <button class="btn-primary"   id="submitVoidComposer">Post VOID</button>
+    </div>
+  </div>
+
+  <!-- FlashVoid Composer (bottom sheet) -->
+  <div class="void-composer" id="flashComposer" style="display:none">
+    <div class="sheet-handle"></div>
+    <h4 class="void-composer__title">⚡ FlashVoid</h4>
+    <div class="composer-media-preview" id="flashMediaPreview" style="display:none">
+      <img id="flashMediaImg" src="" alt="" class="composer-media-img">
+      <button class="btn-icon composer-media-remove" id="flashMediaRemove">✕</button>
+    </div>
+    <textarea class="void-composer__input" id="flashComposerInput"
+      maxlength="280" placeholder="Caption… (optional)"></textarea>
+    <div class="flash-timer-row" id="flashTimerOpts">
+      <span class="vf-bar__label" style="font-size:.68rem">Burns:</span>
+      <button class="vf-timer vf-timer--active" data-fms="0">👁 Once</button>
+      <button class="vf-timer" data-fms="3000">3s</button>
+      <button class="vf-timer" data-fms="5000">5s</button>
+      <button class="vf-timer" data-fms="10000">10s</button>
+      <button class="vf-timer" data-fms="30000">30s</button>
+    </div>
+    <div class="modal__actions">
+      <button class="btn-icon" id="flashMediaBtn" title="Add image">🖼</button>
+      <input type="file" id="flashMediaPicker" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none">
+      <button class="btn-secondary" id="cancelFlashComposer">Cancel</button>
+      <button class="btn-primary" id="submitFlashComposer">Flash It ⚡</button>
     </div>
   </div>
 </div>

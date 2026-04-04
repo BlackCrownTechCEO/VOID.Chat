@@ -324,7 +324,8 @@ const publicKeys  = new Map()  // voidId → base64 ECDH public key
 const roomKeyPkts = new Map()  // roomKey(sid,rid) → Map<voidId, wrappedKey>
 
 // ── VOID Feed ────────────────────────────────────────
-const voids        = new Map()  // voidId → { voidId, fromVoidId, name, text, type, expiresAt }
+const voids        = new Map()  // voidId → { voidId, fromVoidId, name, text, attach, type, expiresAt }
+const feedFlashes  = new Map()  // flashId → { flashId, fromVoidId, name, text, attach, vfExpiry, vfThumb, postedAt }
 const userDailyAct = new Map()  // voidId → { lastMsgDay }
 
 function mkVoidId() { return `vd_${uid().slice(0, 12)}` }
@@ -890,15 +891,21 @@ io.on('connection', socket => {
     })
 
     // ── VOID Feed ─────────────────────────────────────
-    socket.on('postVoid', ({ text, expiresInMs }) => {
+    socket.on('postVoid', ({ text, attach, expiresInMs }) => {
         const vid = socket.data?.voidId
-        if (!vid || !text?.trim()) return
+        if (!vid || (!text?.trim() && !attach)) return
+        if (attach) {
+            const sz = (attach.dataUrl?.length || 0) * 0.75
+            if (sz > 5_242_880) { socket.emit('err', { msg: 'Image too large — max 5 MB' }); return }
+            if (!attach.mimeType?.startsWith('image/')) { socket.emit('err', { msg: 'Only images allowed in VOIDs' }); return }
+        }
         const maxMs = 86_400_000 // 24h hard cap
         const entry = {
             voidId:     mkVoidId(),
             fromVoidId: vid,
             name:       socket.data?.name || VoidSockets.name(vid),
-            text:       text.trim().slice(0, 280),
+            text:       (text || '').trim().slice(0, 280),
+            attach:     attach || null,
             type:       'manual',
             expiresAt:  Date.now() + Math.max(0, Math.min(Number(expiresInMs) || 3_600_000, maxMs))
         }
@@ -906,9 +913,45 @@ io.on('connection', socket => {
         io.emit('voidPosted', entry)
     })
 
+    socket.on('postFeedFlash', ({ text, attach, vfExpiry, vfThumb }) => {
+        const vid = socket.data?.voidId
+        if (!vid || (!text?.trim() && !attach)) return
+        if (attach) {
+            const sz = (attach.dataUrl?.length || 0) * 0.75
+            if (sz > 5_242_880) { socket.emit('err', { msg: 'Image too large — max 5 MB' }); return }
+        }
+        const flashId = mkVoidId()
+        const entry = {
+            flashId,
+            fromVoidId: vid,
+            name:       socket.data?.name || '',
+            text:       (text || '').trim().slice(0, 280),
+            attach:     attach || null,
+            vfExpiry:   Math.min(Number(vfExpiry) || 0, 30_000),
+            vfThumb:    vfThumb || null,
+            postedAt:   Date.now()
+        }
+        feedFlashes.set(flashId, entry)
+        io.emit('feedFlashPosted', entry)
+        // Auto-expire after 24h
+        setTimeout(() => {
+            if (feedFlashes.delete(flashId)) io.emit('feedFlashExpired', { flashId })
+        }, 86_400_000)
+    })
+
+    socket.on('feedFlashOpened', ({ flashId }) => {
+        const flash = feedFlashes.get(flashId)
+        if (!flash) return
+        if (flash.vfExpiry === 0) {
+            feedFlashes.delete(flashId)
+            io.emit('feedFlashExpired', { flashId })
+        }
+    })
+
     socket.on('getFeed', () => {
         const now = Date.now()
-        const activeVoids = [...voids.values()].filter(v => v.expiresAt > now)
+        const activeVoids   = [...voids.values()].filter(v => v.expiresAt > now)
+        const activeFlashes = [...feedFlashes.values()]
 
         // Server spotlight cards from active rooms
         const spotlights = []
@@ -925,7 +968,7 @@ io.on('connection', socket => {
             })
         }
 
-        socket.emit('feedData', { voids: activeVoids, cards: spotlights })
+        socket.emit('feedData', { voids: activeVoids, cards: spotlights, flashes: activeFlashes })
     })
 
     socket.on('roomKeyPacket', ({ serverId, roomId, toVoidId, wrappedKey }) => {

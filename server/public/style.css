@@ -700,6 +700,11 @@ canvas { display:block }
 .void-ring--manual { background:linear-gradient(135deg,var(--acc),var(--acc2)) }
 .void-ring--auto   { background:linear-gradient(135deg,var(--acc2),var(--acc3)) }
 .void-ring--streak { background:linear-gradient(135deg,var(--acc3),#ff8c00) }
+.void-ring--flash  { background:linear-gradient(135deg,#ff9500,#ffcc00) }
+.void-ring--flash-post { background:linear-gradient(135deg,#7b2fff,#b47aff) }
+.void-ring__av--flash { background:transparent; color:#ffcc00; font-size:1.4rem }
+.void-ring__flash-thumb { width:52px; height:52px; border-radius:50%; object-fit:cover;
+  filter:blur(3px) brightness(.7) }
 .void-ring__name { font-size:.65rem; color:var(--tx2); text-align:center;
   max-width:62px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 
@@ -869,3 +874,28 @@ canvas { display:block }
 .vf-image { max-width:min(280px,85%); border-radius:8px; margin-bottom:6px }
 .vf-thumb-wrap { width:36px; height:36px; border-radius:6px; overflow:hidden; flex-shrink:0 }
 .vf-thumb { width:100%; height:100%; object-fit:cover; filter:blur(4px) brightness(.7) }
+
+/* ── Flash viewer extras ─────────────────────────────── */
+.void-viewer--flash { background:linear-gradient(180deg,#0d0018 0%,#07070f 100%) }
+.flash-viewer__e2e { position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+  font-size:.68rem; color:#ffcc0099; white-space:nowrap }
+
+/* ── Composer media preview ──────────────────────────── */
+.composer-media-preview { position:relative; margin-bottom:10px; display:flex;
+  align-items:flex-start; gap:8px }
+.composer-media-img { max-height:140px; max-width:100%; border-radius:8px;
+  object-fit:cover; border:1px solid var(--bdr1) }
+.composer-media-remove { position:absolute; top:4px; right:4px; background:#0009;
+  border-radius:50%; width:22px; height:22px; font-size:.7rem }
+
+/* ── Flash timer row in composer ─────────────────────── */
+.flash-timer-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+  margin-bottom:14px }
+
+/* ── Feed card media ─────────────────────────────────── */
+.feed-card__img { width:100%; border-radius:8px; object-fit:cover;
+  max-height:200px; margin-bottom:8px; cursor:pointer }
+
+/* ── VOID viewer media ───────────────────────────────── */
+.void-viewer__media { max-width:100%; max-height:50vh; border-radius:10px;
+  object-fit:contain; margin:10px 0; cursor:zoom-in }
