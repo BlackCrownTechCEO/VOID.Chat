@@ -770,3 +770,90 @@ canvas { display:block }
   .feed-grid { columns:1 }
   .feed-overlay { padding-bottom:env(safe-area-inset-bottom) }
 }
+
+/* ═══════════════════════════════════════════════════════
+   OWNER NAV TAB (gold accent inside admin panel)
+═══════════════════════════════════════════════════════ */
+.admin-nav-item--owner { color:#f5c842; margin-top:auto }
+.admin-nav-item--owner.admin-nav-item--active { color:#f5c842; border-left-color:#f5c842; background:#f5c84212 }
+.admin-nav-item--owner:hover { color:#f5c842; background:#f5c84218 }
+.owner-sub-tabs { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:14px }
+.owner-sub-tab { padding:4px 11px; background:var(--bg3); border:1px solid var(--bdr);
+  border-radius:6px; color:var(--tx2); font-size:.74rem; cursor:pointer; transition:all var(--tr) }
+.owner-sub-tab--active { background:#f5c84220; color:#f5c842; border-color:#f5c84244 }
+.owner-sub-tab:hover { color:var(--tx1) }
+.owner-sub-section { display:none; flex-direction:column; gap:10px }
+.owner-sub-section--active { display:flex }
+
+/* ═══════════════════════════════════════════════════════
+   ATTACH MENU + FILE CHIP + LIGHTBOX
+═══════════════════════════════════════════════════════ */
+.attach-wrap { position:relative }
+.attach-menu { position:absolute; bottom:calc(100% + 8px); left:0;
+  background:var(--bg2); border:1px solid var(--bdr); border-radius:12px;
+  padding:8px; display:flex; gap:8px; z-index:20; min-width:200px;
+  box-shadow:0 8px 32px #0008 }
+.attach-opt { flex:1; text-align:center; padding:10px 8px; border-radius:8px;
+  background:var(--bg3); border:1px solid var(--bdr); cursor:pointer;
+  color:var(--tx2); font-size:.78rem; transition:all var(--tr) }
+.attach-opt:hover { border-color:var(--acc); color:var(--tx1) }
+.attach-opt--cam { border-color:#7b2fff44; color:#b47aff }
+.attach-opt--cam:hover { border-color:#7b2fff; background:#7b2fff18 }
+.attach-opt__icon { display:block; font-size:1.2rem; margin-bottom:3px }
+.attach-chip { display:flex; align-items:center; gap:6px; padding:4px 10px;
+  background:var(--bg3); border:1px solid var(--bdr); border-radius:20px;
+  font-size:.78rem; color:var(--tx2); margin-bottom:6px }
+.attach-chip__remove { cursor:pointer; color:var(--red); font-size:.8rem; line-height:1 }
+.msg-image--upload { max-width:min(320px,90%); border-radius:10px;
+  cursor:zoom-in; display:block; margin-top:4px }
+.msg-file-link { color:var(--acc); text-decoration:underline; font-size:.82rem }
+#lightboxOverlay { position:fixed; inset:0; background:#000d; z-index:9999;
+  display:flex; align-items:center; justify-content:center; cursor:zoom-out }
+#lightboxOverlay img { max-width:90vw; max-height:90vh; border-radius:10px;
+  box-shadow:0 0 60px #0008 }
+
+/* ═══════════════════════════════════════════════════════
+   CAMERA MODAL
+═══════════════════════════════════════════════════════ */
+.modal--camera { background:#000; border-radius:18px; overflow:hidden;
+  width:min(480px,95vw); aspect-ratio:4/3; position:relative; padding:0 }
+#cameraPreview { width:100%; height:100%; object-fit:cover; display:block }
+.camera-controls { position:absolute; bottom:16px; left:0; right:0;
+  display:flex; justify-content:center; align-items:center; gap:20px }
+.shutter-btn { width:60px; height:60px; border-radius:50%;
+  background:#fff; border:4px solid #aaa; cursor:pointer; flex-shrink:0 }
+.cam-flip-btn, .cam-close-btn { width:36px; height:36px; border-radius:50%;
+  background:#0009; border:1px solid #333; cursor:pointer;
+  color:#fff; font-size:1rem; display:flex; align-items:center; justify-content:center }
+
+/* ═══════════════════════════════════════════════════════
+   VOIDFLASH BAR + MESSAGES
+═══════════════════════════════════════════════════════ */
+#vfBar { display:none; align-items:center; gap:6px; padding:7px 10px;
+  background:#7b2fff18; border:1px solid #7b2fff40; border-radius:8px; margin-bottom:6px }
+.vf-bar__label { font-size:.72rem; color:#b47aff; font-weight:800; letter-spacing:.06em }
+.vf-timer { padding:3px 9px; border-radius:20px; font-size:.7rem;
+  background:var(--bg3); color:var(--tx2); cursor:pointer;
+  border:1px solid transparent; transition:all var(--tr) }
+.vf-timer--active { background:#7b2fff33; color:#b47aff; border-color:#7b2fff55 }
+.vf-timer:hover { color:var(--tx1) }
+.msg--voidflash { list-style:none }
+.vf-overlay { background:#7b2fff18; border:1px solid #7b2fff44; border-radius:10px;
+  padding:10px 14px; display:flex; align-items:center; gap:10px;
+  cursor:pointer; transition:background var(--tr) }
+.vf-overlay:hover { background:#7b2fff28 }
+.vf-icon { font-size:1.2rem }
+.vf-from { font-weight:700; font-size:.84rem; color:#b47aff }
+.vf-meta { font-size:.72rem; color:var(--tx3) }
+.vf-tap { margin-left:auto; font-size:.72rem; color:#b47aff; font-weight:700 }
+.vf-opened { background:var(--bg2); border:1px solid #7b2fff44;
+  border-radius:10px; padding:10px 14px }
+.vf-text { color:var(--tx1); font-size:.9rem; margin-bottom:6px }
+.vf-countdown-wrap { height:3px; background:var(--bg3); border-radius:2px; margin:6px 0 }
+.vf-countdown { height:100%; background:#7b2fff; border-radius:2px;
+  transition:width .1s linear }
+.vf-burning { font-size:.72rem; color:#ff6b6b; margin-top:4px }
+.vf-e2e { font-size:.7rem; color:var(--acc); margin-top:2px }
+.msg--ghost { color:var(--tx3); font-size:.78rem; font-style:italic; padding:4px 0;
+  list-style:none }
+.vf-image { max-width:min(280px,85%); border-radius:8px; margin-bottom:6px }
