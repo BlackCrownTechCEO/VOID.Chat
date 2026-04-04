@@ -250,6 +250,7 @@ const DMs = {
         if(!this.convos.has(k)) this.convos.set(k,[])
         const c=this.convos.get(k); c.push(msg); if(c.length>MAX_HIST) c.shift()
     },
+    delMsg(a,b,msgId){ const k=this.key(a,b); const c=this.convos.get(k); if(c) this.convos.set(k,c.filter(m=>m.id!==msgId)) },
     history(a,b){ return this.convos.get(this.key(a,b))||[] }
 }
 
@@ -449,13 +450,26 @@ io.on('connection', socket => {
     })
 
     // ── Chat message ─────────────────────────────────────
-    socket.on('message',({name,text,replyTo})=>{
+    socket.on('message',({name,text,replyTo,attach,voidFlash,vfExpiry,vfCipher,vfIv,vfThumb})=>{
         const user=Users.get(socket.id); if(!user) return
         if(Admin.isMuted(user.room,socket.id)) return socket.emit('joinError',{type:'muted',message:'You are muted.'})
         if(!checkFloodLimit(socket.id)) return socket.emit('joinError',{type:'rateLimit',message:'Slow down — too many messages.'})
-        const filtered=applyGlobalFilter(Admin.filterText(user.room,text))
+
+        // Validate attachment if present
+        if(attach){
+            const okMime=/^(image\/(png|jpeg|gif|webp|svg\+xml)|application\/pdf|text\/.*)$/
+            if(!okMime.test(attach.mimeType||'')) return socket.emit('joinError',{type:'rateLimit',message:'Unsupported file type.'})
+            if((attach.dataUrl||'').length>7_340_032) return socket.emit('joinError',{type:'rateLimit',message:'File too large (max 5 MB).'})
+        }
+
+        const filteredText = voidFlash ? '' : applyGlobalFilter(Admin.filterText(user.room, text||''))
         statMsgCount++
-        const msg=buildMsg(name,filtered,replyTo,'user')
+        const extra = {}
+        if(attach)     extra.attach     = attach
+        if(voidFlash)  { extra.voidFlash=true; extra.vfExpiry=Math.max(0,Number(vfExpiry)||0);
+                         extra.vfCipher=vfCipher; extra.vfIv=vfIv; extra.vfThumb=vfThumb;
+                         extra.fromVoidId=socket.data?.voidId }
+        const msg=buildMsg(name, filteredText, replyTo, 'user', extra)
         Rooms.addMsg(user.room,msg)
         io.to(user.room).emit('message',msg)
         socket.emit('delivered',{msgId:msg.id})
@@ -674,15 +688,44 @@ io.on('connection', socket => {
         socket.emit('dmHistory',{withVoidId,messages:DMs.history(vid,withVoidId)})
     })
 
-    socket.on('sendDm',({toVoidId,text})=>{
+    socket.on('sendDm',({toVoidId,text,ciphertext,iv,attach,voidFlash,vfExpiry,vfCipher,vfIv,vfThumb})=>{
         const vid=socket.data?.voidId; const name=socket.data?.name; if(!vid||!name) return
         if(!Friends.areFriends(vid,toVoidId)) return socket.emit('dmError',{message:'Not friends with this user.'})
         if(Friends.isBlocked(toVoidId,vid)) return socket.emit('dmError',{message:'This user has blocked you.'})
-        const msg=buildMsg(name,text,null,'user',{fromVoid:vid,toVoid:toVoidId})
+        const extra={fromVoid:vid,toVoid:toVoidId}
+        if(ciphertext) { extra.ciphertext=ciphertext; extra.iv=iv }
+        if(attach)     extra.attach=attach
+        if(voidFlash)  { extra.voidFlash=true; extra.vfExpiry=Math.max(0,Number(vfExpiry)||0);
+                         extra.vfCipher=vfCipher; extra.vfIv=vfIv; extra.vfThumb=vfThumb;
+                         extra.fromVoidId=vid }
+        const displayText = ciphertext ? '' : (text||'')
+        const msg=buildMsg(name,displayText,null,'user',extra)
         DMs.addMsg(vid,toVoidId,msg)
         socket.emit('dm',{msg,withVoidId:toVoidId})
         const toSid=VoidSockets.sid(toVoidId)
-        if(toSid){ io.to(toSid).emit('dm',{msg,withVoidId:vid}); io.to(toSid).emit('dmNotification',{fromVoidId:vid,fromName:name,preview:text.slice(0,50)}) }
+        const preview=ciphertext?'🔒 Encrypted message':(voidFlash?'⚡ VoidFlash':(text||'').slice(0,50))
+        if(toSid){ io.to(toSid).emit('dm',{msg,withVoidId:vid}); io.to(toSid).emit('dmNotification',{fromVoidId:vid,fromName:name,preview}) }
+    })
+
+    // ── VoidFlash opened (delete from history for both sides) ──
+    socket.on('voidFlashOpened',({msgId,isDm,withVoidId})=>{
+        if(isDm){
+            const vid=socket.data?.voidId; if(!vid) return
+            DMs.delMsg(vid,withVoidId||'',msgId)
+            const toSid=VoidSockets.sid(withVoidId||'')
+            if(toSid) io.to(toSid).emit('deleteMsg',{msgId})
+        } else {
+            const u=Users.get(socket.id); if(!u) return
+            Rooms.delMsg(u.room,msgId)
+            io.to(u.room).emit('deleteMsg',{msgId})
+        }
+    })
+
+    // ── VoidFlash screenshot alert ────────────────────────────
+    socket.on('vfScreenshot',({msgId,isDm,senderVoidId})=>{
+        const screenshotterName = socket.data?.name || Users.get(socket.id)?.name || 'Someone'
+        const senderSid=VoidSockets.sid(senderVoidId||'')
+        if(senderSid) io.to(senderSid).emit('vfScreenshotAlert',{byName:screenshotterName,msgId})
     })
 
     // ── Groups ───────────────────────────────────────────
