@@ -965,3 +965,234 @@ canvas { display:block }
 #joinChannelBtn { display: none; }
 #browseBtn { margin-top: 4px; background: var(--bg-4); border: 1px solid var(--bdr); color: var(--tx1); }
 #browseBtn:hover { background: var(--bg-3); color: var(--tx0); }
+
+/* ══════════════════════════════════════════════
+   AUTH — Supabase OAuth identity linking
+══════════════════════════════════════════════ */
+
+/* Section wrapper */
+.auth-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bdr);
+}
+.auth-section-label {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  color: var(--tx3);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* OAuth provider buttons */
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: var(--bg-4);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  color: var(--tx1);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--tr), border-color var(--tr), color var(--tr);
+  text-align: left;
+}
+.oauth-btn:hover { background: var(--bg-3); border-color: rgba(255,255,255,.14); color: var(--tx0); }
+.oauth-btn svg   { flex-shrink: 0; opacity: .85; }
+
+/* Linked account row */
+.auth-linked-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-4);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+}
+.auth-linked-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-3);
+  flex-shrink: 0;
+}
+.auth-linked-info { flex: 1; min-width: 0; }
+.auth-linked-email {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--tx0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.auth-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--grn);
+  background: rgba(34,197,94,.12);
+  border-radius: 99px;
+  padding: 2px 7px;
+  margin-top: 2px;
+}
+.auth-unlink-btn {
+  font-size: .75rem;
+  color: var(--tx3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r);
+  transition: color var(--tr), background var(--tr);
+}
+.auth-unlink-btn:hover { color: var(--red); background: rgba(239,68,68,.1); }
+
+/* Restore banner */
+.auth-restore-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(91,108,245,.1);
+  border: 1px solid rgba(91,108,245,.25);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+}
+.auth-restore-text { flex: 1; font-size: .82rem; color: var(--tx1); }
+.auth-restore-text strong { color: var(--acc); }
+.auth-restore-btn {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--acc);
+  background: rgba(91,108,245,.15);
+  border: 1px solid rgba(91,108,245,.3);
+  border-radius: var(--r);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background var(--tr);
+  white-space: nowrap;
+}
+.auth-restore-btn:hover { background: rgba(91,108,245,.25); }
+
+/* Verified badge in chat messages */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--acc);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  margin-left: 3px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* ── Auth HTML class aliases (matching actual HTML) ─ */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 10px;
+  color: var(--tx3);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--bdr);
+}
+.auth-oauth-btns { display: flex; flex-direction: column; gap: 8px; }
+.auth-oauth-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-4);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  color: var(--tx1);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--tr), border-color var(--tr), color var(--tr);
+  text-align: left;
+}
+.auth-oauth-btn:hover { background: var(--bg-3); border-color: rgba(255,255,255,.14); color: var(--tx0); }
+.auth-oauth-btn svg   { flex-shrink: 0; }
+.auth-linked-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-4);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.auth-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-3);
+  flex-shrink: 0;
+}
+.auth-email {
+  flex: 1;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--tx0);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.auth-signout-btn {
+  font-size: .75rem;
+  color: var(--tx3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r);
+  transition: color var(--tr), background var(--tr);
+}
+.auth-signout-btn:hover { color: var(--red); background: rgba(239,68,68,.1); }
+.auth-restore-card {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(91,108,245,.1);
+  border: 1px solid rgba(91,108,245,.25);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.auth-restore-card p {
+  font-size: .82rem;
+  color: var(--tx1);
+  margin: 0;
+}

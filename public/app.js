@@ -216,6 +216,7 @@ enterVoidBtn.addEventListener('click', () => {
     window.myVoidId = myVoidId
     window.myName   = myName
     window.sendMsg  = sendMsg
+    window.VoidAuth?.saveProfile({ voidId: myVoidId, nickname: nick })
     showApp()
 })
 
@@ -269,6 +270,28 @@ function getDeviceFingerprint() {
 
 // ─── Init ─────────────────────────────────────────────────
 initIdentityScreen()
+
+// ─── VoidAuth restore callback ────────────────────────────
+// Called by auth.js when a linked account restores an identity on a new device
+setTimeout(() => {
+    if (window.VoidAuth) {
+        window.VoidAuth._onRestore = (profile) => {
+            if (!profile?.voidId) return
+            const existing = loadIdentity()
+            if (existing?.voidId) return // already have local identity
+            myVoidId = profile.voidId
+            myName   = profile.nickname || profile.voidId
+            saveIdentity({ voidId: myVoidId, nickname: myName })
+            voidIdDisplay.textContent = myVoidId
+            nicknameInput.value       = myName
+            window.myVoidId = myVoidId
+            window.myName   = myName
+            window.sendMsg  = sendMsg
+            showToast(`Identity restored: ${myVoidId}`, 'success')
+            showApp()
+        }
+    }
+}, 0)
 
 // ═══════════════════════════════════════════════════════
 //  AVATAR / FORMAT HELPERS
