@@ -155,6 +155,22 @@ function openFlashViewer(flash) {
       ${imgHtml}
       ${textHtml}`
 
+    // Own flash: show delete button in viewer
+    const existingDel = flashViewerEl.querySelector('.flash-del-btn')
+    if (existingDel) existingDel.remove()
+    if (flash.fromVoidId && flash.fromVoidId === window.myVoidId) {
+        const del = document.createElement('button')
+        del.className = 'btn-icon flash-del-btn'
+        del.style.cssText = 'position:absolute;top:10px;left:14px;font-size:1rem'
+        del.textContent = '🗑'
+        del.title = 'Delete FlashVoid'
+        del.addEventListener('click', () => {
+            window.socket.emit('deleteFeedFlash', { flashId: flash.flashId })
+            closeFlashViewer()
+        })
+        flashViewerEl.appendChild(del)
+    }
+
     flashViewerEl.style.display = 'flex'
 
     if (flash.vfExpiry === 0) {
@@ -385,7 +401,21 @@ function buildMomentCard(v) {
       <span class="feed-card__pill">${typeLabel}</span>
       <span class="feed-card__pill feed-card__pill--expiry">${expiryLabel}</span>`
 
-    card.addEventListener('click', () => openVoidViewer(v))
+    card.addEventListener('click', e => {
+        if (e.target.closest('.feed-card__del')) return
+        openVoidViewer(v)
+    })
+    if (v.fromVoidId && v.fromVoidId === window.myVoidId) {
+        const del = document.createElement('button')
+        del.className = 'feed-card__del btn-icon'
+        del.title = 'Delete VOID'
+        del.textContent = '🗑'
+        del.addEventListener('click', e => {
+            e.stopPropagation()
+            window.socket.emit('deleteVoid', { voidId: v.voidId })
+        })
+        card.appendChild(del)
+    }
     return card
 }
 

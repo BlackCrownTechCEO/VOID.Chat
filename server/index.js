@@ -122,6 +122,10 @@ const Admin = {
     warnCount(room,sid) { return this.warnings.get(room)?.get(sid)||0 },
     clearWarns(room,sid){ this.warnings.get(room)?.delete(sid) },
 
+    nsfwRooms: new Set(),
+    setNsfw(room,v){ v ? this.nsfwRooms.add(room) : this.nsfwRooms.delete(room) },
+    isNsfw(room){ return this.nsfwRooms.has(room) },
+
     addFilter(room,word){ if(!this.wordFilter.has(room)) this.wordFilter.set(room,new Set()); this.wordFilter.get(room).add(word.toLowerCase()) },
     remFilter(room,word){ this.wordFilter.get(room)?.delete(word.toLowerCase()) },
     filterText(room,text){
@@ -161,6 +165,8 @@ const Audit = {
 // ═══════════════════════════════════════════════════════
 //  OWNER  (System Admin)
 // ═══════════════════════════════════════════════════════
+const hwBans   = new Map()  // fingerprint → { fp, voidId, name, bannedAt }
+
 const Owner = {
     owners:    new Set(),
     globalBans: new Map(), // voidId → { name, reason, bannedAt }
@@ -188,6 +194,10 @@ const serverConfig = {
     defaultChannel: 'general', allowGuestNames: true, registrationOpen: true
 }
 const announceQueue = []    // [{ text, sendAt, pinned }]
+
+function roomListPayload() {
+    return { rooms: Users.rooms().map(r => ({ name: r, isNsfw: Admin.isNsfw(r) })) }
+}
 
 function addGlobalAudit(action, by, target='', type='info') {
     const entry = { action, by, target, time: ts(), type }
@@ -361,8 +371,10 @@ io.on('connection', socket => {
     socket.emit('message',buildMsg(SYS,'Welcome to VOID — private messaging by BlackCrownTech.',null,'system'))
 
     // ── Authenticate (called as soon as identity is set) ─
-    socket.on('authenticate', ({voidId,name})=>{
+    socket.on('authenticate', ({voidId,name,fp})=>{
         if(!voidId||!name) return
+        if(fp && hwBans.has(fp)){ socket.emit('globalBanned',{message:'You are hardware banned from VOID.'}); socket.disconnect(); return }
+        if(fp) socket.data.fp = fp
         if(Owner.isBanned(voidId)){ socket.emit('globalBanned',{message:'You are globally banned from VOID.'}); socket.disconnect(); return }
         if(maintenanceMode&&!Owner.isOwner(voidId)){ socket.emit('maintenanceLock',{message:'Server is under maintenance. Please try again later.'}); socket.disconnect(); return }
         if(!serverConfig.registrationOpen&&!VoidSockets.online(voidId)){ socket.emit('globalBanned',{message:'Registration is currently closed.'}); socket.disconnect(); return }
@@ -408,7 +420,7 @@ io.on('connection', socket => {
         if(Users.inRoom(room).length===1) Admin.makeAdmin(room,socket.id)
 
         const isAdmin=Admin.isAdmin(room,socket.id)
-        socket.emit('joinSuccess',{name,room,isAdmin})
+        socket.emit('joinSuccess',{name,room,isAdmin,isNsfw:Admin.isNsfw(room)})
         socket.emit('history',Rooms.history(room))
         const pin=Admin.getPin(room); if(pin) socket.emit('pinnedMsg',pin)
         const welcome=Rooms.map.get(room)?.welcome; if(welcome) socket.emit('message',buildMsg(SYS,welcome,null,'system'))
@@ -417,7 +429,7 @@ io.on('connection', socket => {
         socket.emit('message',buildMsg(SYS,`You joined #${room}`,null,'system'))
         socket.broadcast.to(room).emit('message',buildMsg(SYS,`${name} joined #${room}`,null,'system'))
         io.to(room).emit('userList',{users:richUsers(room)})
-        io.emit('roomList',{rooms:Users.rooms()})
+        io.emit('roomList',roomListPayload())
         if(isAdmin) socket.emit('adminStatus',{isAdmin:true})
     })
 
@@ -444,7 +456,7 @@ io.on('connection', socket => {
             }
             io.to(user.room).emit('message',buildMsg(SYS,`${user.name} left #${user.room}`,null,'system'))
             io.to(user.room).emit('userList',{users:richUsers(user.room)})
-            io.emit('roomList',{rooms:Users.rooms()})
+            io.emit('roomList',roomListPayload())
         }
         rateLimitMap.delete(socket.id)
         console.log(`\x1b[90m[VOID]\x1b[0m - ${socket.id}`)
@@ -515,7 +527,7 @@ io.on('connection', socket => {
                 io.to(t.id).emit('kicked',{reason:cmd==='ban'?'You have been banned.':'Kicked by admin.'})
                 const ts=io.sockets.sockets.get(t.id); if(ts) ts.leave(room); Users.remove(t.id)
                 sys(`${t.name} was ${cmd==='ban'?'banned':'kicked'} by ${user.name}.`)
-                io.to(room).emit('userList',{users:richUsers(room)}); io.emit('roomList',{rooms:Users.rooms()}); break
+                io.to(room).emit('userList',{users:richUsers(room)}); io.emit('roomList',roomListPayload()); break
             }
             case 'mute':{ const t=Users.byName(room,target); if(!t) return err(`"${target}" not found.`); const nm=Admin.toggleMute(room,t.id); io.to(t.id).emit('muteStatus',{muted:nm}); sys(`${t.name} was ${nm?'muted':'unmuted'} by ${user.name}.`); io.to(room).emit('userList',{users:richUsers(room)}); break }
             case 'tempmute':{ const t=Users.byName(room,target); if(!t) return err(`"${target}" not found.`); const mins=parseInt(data)||5; Admin.tempMute(room,t.id,mins,io); sys(`${t.name} temp-muted for ${mins}min by ${user.name}.`); io.to(room).emit('userList',{users:richUsers(room)}); break }
@@ -524,7 +536,7 @@ io.on('connection', socket => {
                 const count=Admin.warn(room,t.id)
                 io.to(t.id).emit('warned',{room,count,by:user.name})
                 sys(`⚠ ${t.name} warned by ${user.name} (${count}/3).`)
-                if(count>=3){ io.to(t.id).emit('kicked',{reason:'Auto-kicked: 3 warnings reached.'}); const ts=io.sockets.sockets.get(t.id); if(ts) ts.leave(room); Users.remove(t.id); io.to(room).emit('userList',{users:richUsers(room)}); io.emit('roomList',{rooms:Users.rooms()}); sys(`${t.name} auto-kicked after 3 warnings.`) }
+                if(count>=3){ io.to(t.id).emit('kicked',{reason:'Auto-kicked: 3 warnings reached.'}); const ts=io.sockets.sockets.get(t.id); if(ts) ts.leave(room); Users.remove(t.id); io.to(room).emit('userList',{users:richUsers(room)}); io.emit('roomList',roomListPayload()); sys(`${t.name} auto-kicked after 3 warnings.`) }
                 else io.to(room).emit('userList',{users:richUsers(room)})
                 break
             }
@@ -544,6 +556,28 @@ io.on('connection', socket => {
             case 'addfilter':{ Admin.addFilter(room,(data||'').trim()); sys(`Word filter updated by ${user.name}.`); break }
             case 'remfilter':{ Admin.remFilter(room,(data||'').trim()); sys(`Word filter updated by ${user.name}.`); break }
             case 'auditlog':{ socket.emit('auditLog',{logs:Audit.get(room)}); break }
+            case 'setNsfw':{
+                const v = data === true || data === 'true'
+                Admin.setNsfw(room, v)
+                io.to(room).emit('nsfwStatus',{room,isNsfw:v})
+                io.emit('roomList',roomListPayload())
+                sys(`#${room} ${v?'marked as NSFW 🔞':'cleared NSFW flag'} by ${user.name}.`)
+                break
+            }
+            case 'hwban':{
+                const t=Users.byName(room,target)||Users.inRoom(room).find(u=>u.voidId===target)
+                if(!t) return err(`"${target}" not found.`)
+                if(t.id===socket.id) return err('Cannot target yourself.')
+                const ts=io.sockets.sockets.get(t.id)
+                const fp=ts?.data?.fp
+                if(fp) hwBans.set(fp,{fp,voidId:t.voidId,name:t.name,bannedAt:Date.now()})
+                Owner.globalBan(t.voidId,t.name,'Hardware banned')
+                io.to(t.id).emit('globalBanned',{message:'You are hardware banned from VOID.'})
+                if(ts) ts.disconnect(true)
+                Audit.add(room,'hwban',user.name,t.name)
+                sys(`${t.name} was hardware banned by ${user.name}.`)
+                break
+            }
         }
     })
 
@@ -611,7 +645,7 @@ io.on('connection', socket => {
                 addGlobalAudit('configUpdate',vid,'','info'); break
             case 'deleteRoom':{
                 const room=args.room; Users.inRoom(room).forEach(u=>{ io.to(u.id).emit('kicked',{reason:'Channel deleted by Server Owner.'}); Users.remove(u.id) })
-                Rooms.map.delete(room); io.emit('roomList',{rooms:Users.rooms()})
+                Rooms.map.delete(room); io.emit('roomList',roomListPayload())
                 addGlobalAudit('deleteRoom',vid,room,'warn'); break
             }
             case 'promoteOwner':{
@@ -946,6 +980,22 @@ io.on('connection', socket => {
             feedFlashes.delete(flashId)
             io.emit('feedFlashExpired', { flashId })
         }
+    })
+
+    socket.on('deleteVoid', ({ voidId }) => {
+        const vid = socket.data?.voidId; if (!vid) return
+        const v = voids.get(voidId)
+        if (!v || v.fromVoidId !== vid) return
+        voids.delete(voidId)
+        io.emit('voidExpired', { voidId })
+    })
+
+    socket.on('deleteFeedFlash', ({ flashId }) => {
+        const vid = socket.data?.voidId; if (!vid) return
+        const f = feedFlashes.get(flashId)
+        if (!f || f.fromVoidId !== vid) return
+        feedFlashes.delete(flashId)
+        io.emit('feedFlashExpired', { flashId })
     })
 
     socket.on('getFeed', () => {

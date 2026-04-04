@@ -1159,6 +1159,22 @@
     })
   }
 </script>
+<!-- NSFW Gate overlay -->
+<div class="nsfw-gate" id="nsfwGate" style="display:none">
+  <div class="nsfw-gate__box">
+    <div class="nsfw-gate__icon">🔞</div>
+    <h3 class="nsfw-gate__title">Age-Restricted Channel</h3>
+    <p class="nsfw-gate__desc">
+      <strong id="nsfwGateRoom">#channel</strong> contains adult content.<br>
+      You must be 18+ to view this channel.
+    </p>
+    <div class="modal__actions" style="justify-content:center;gap:12px">
+      <button class="btn-secondary" onclick="window.denyNsfw()">Leave</button>
+      <button class="btn-primary" onclick="window.confirmNsfw()">I am 18+ — Enter</button>
+    </div>
+  </div>
+</div>
+
 <!-- Camera capture modal -->
 <div class="modal-overlay" id="cameraModal" style="display:none">
   <div class="modal modal--camera">

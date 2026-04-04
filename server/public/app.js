@@ -239,7 +239,31 @@ function showApp() {
     setProfile(myName, 'online')
     $('settingsVoidId').textContent = myVoidId
     $('settingsCopyVoid').onclick = () => navigator.clipboard.writeText(myVoidId).then(() => showToast('VOID ID copied!', 'success'))
-    socket.emit('authenticate', { voidId: myVoidId, name: myName })
+    socket.emit('authenticate', { voidId: myVoidId, name: myName, fp: getDeviceFingerprint() })
+}
+
+// ─── Device Fingerprint ───────────────────────────────────
+function getDeviceFingerprint() {
+    try {
+        const c = document.createElement('canvas')
+        const ctx = c.getContext('2d')
+        ctx.textBaseline = 'top'; ctx.font = '14px Arial'
+        ctx.fillText('VOID\u{1F511}fp', 2, 2)
+        const canvasBit = c.toDataURL().slice(-40)
+        const parts = [
+            navigator.userAgent,
+            navigator.language,
+            screen.colorDepth,
+            `${screen.width}x${screen.height}`,
+            new Date().getTimezoneOffset(),
+            navigator.hardwareConcurrency || 0,
+            navigator.platform,
+            canvasBit
+        ].join('|')
+        let h = 0
+        for (let i = 0; i < parts.length; i++) { h = Math.imul(31, h) + parts.charCodeAt(i) | 0 }
+        return 'fp_' + Math.abs(h).toString(36)
+    } catch (_) { return 'fp_unknown' }
 }
 
 // ─── Init ─────────────────────────────────────────────────
@@ -280,11 +304,16 @@ function formatText(raw) {
 function buildAttachHtml(attach) {
     if (!attach?.dataUrl) return ''
     if (attach.mimeType?.startsWith('image/')) {
-        // data-src avoids JSON.stringify double-quotes breaking the onclick attribute
-        return `<img src="${escHtml(attach.dataUrl)}" class="msg-image msg-image--upload"
-          alt="${escHtml(attach.name)}" loading="lazy"
-          data-src="${escHtml(attach.dataUrl)}"
-          onclick="openLightbox(this.dataset.src)">`
+        return `<div class="img-wrap">
+          <img src="${escHtml(attach.dataUrl)}" class="msg-image msg-image--upload"
+            alt="${escHtml(attach.name)}" loading="lazy"
+            data-src="${escHtml(attach.dataUrl)}"
+            onclick="openLightbox(this.dataset.src)">
+          <button class="img-dl-btn" title="Download"
+            data-src="${escHtml(attach.dataUrl)}"
+            data-name="${escHtml(attach.name)}"
+            onclick="window.downloadImage(this)">⬇</button>
+        </div>`
     }
     return `<a class="msg-file-link" href="${escHtml(attach.dataUrl)}"
       download="${escHtml(attach.name)}">${escHtml(attach.name)}</a>`
@@ -477,6 +506,8 @@ function handleSlash(text) {
         remfilter: () => socket.emit('adminCmd', { cmd: 'remfilter',  data: rest }),
         auditlog:  () => socket.emit('adminCmd', { cmd: 'auditlog' }),
         delmsg:    () => socket.emit('adminCmd', { cmd: 'deleteMsg',  data: parts[1] }),
+        nsfw:      () => socket.emit('adminCmd', { cmd: 'setNsfw',   data: parts[1] === 'off' ? 'false' : 'true' }),
+        hwban:     () => socket.emit('adminCmd', { cmd: 'hwban',     target }),
     }
     if (map[cmd]) map[cmd]()
     else showToast(`Unknown command: /${cmd}`, 'error')
@@ -1065,8 +1096,9 @@ $('rejectCall').addEventListener('click', () => {
 //  SOCKET EVENTS
 // ═══════════════════════════════════════════════════════
 
-socket.on('joinSuccess', ({ name, room, isAdmin }) => {
+socket.on('joinSuccess', ({ name, room, isAdmin, isNsfw }) => {
     myName = name; myRoom = room
+    if (isNsfw) showNsfwGate(room);
     chatDisplay.innerHTML = ''
     typingUsers.clear(); activityBar.innerHTML = ''
     joinOverlay.style.display  = 'none'
@@ -1215,13 +1247,25 @@ socket.on('userList', ({ users }) => {
 socket.on('roomList', ({ rooms }) => {
     roomListEl.innerHTML = ''
     if (!rooms.length) { roomListEl.innerHTML = '<li class="room-item--empty">No active channels</li>'; return }
-    rooms.forEach(room => {
+    rooms.forEach(r => {
+        const name = typeof r === 'string' ? r : r.name
+        const isNsfw = typeof r === 'object' && r.isNsfw
         const li = document.createElement('li')
-        li.className = `room-item${room===myRoom?' room-item--active':''}`
-        li.dataset.room = room
-        li.innerHTML = `<span class="room-hash">#</span><span>${escHtml(room)}</span>`
+        li.className = `room-item${name===myRoom?' room-item--active':''}`
+        li.dataset.room = name
+        li.dataset.nsfw = isNsfw ? '1' : ''
+        li.innerHTML = `<span class="room-hash">#</span><span>${escHtml(name)}</span>${isNsfw ? '<span class="nsfw-badge">🔞</span>' : ''}`
         roomListEl.appendChild(li)
     })
+})
+
+socket.on('nsfwStatus', ({ room, isNsfw }) => {
+    const li = roomListEl.querySelector(`[data-room="${CSS.escape(room)}"]`)
+    if (!li) return
+    li.dataset.nsfw = isNsfw ? '1' : ''
+    const existing = li.querySelector('.nsfw-badge')
+    if (isNsfw && !existing) li.insertAdjacentHTML('beforeend', '<span class="nsfw-badge">🔞</span>')
+    else if (!isNsfw && existing) existing.remove()
 })
 
 // ── WebRTC socket events ──────────────────────────────
@@ -1319,6 +1363,32 @@ window.formatText  = formatText
 window.buildMsgEl  = buildMsgEl
 window.buildRxHtml = buildRxHtml
 window.amOwner     = false
+
+// ── NSFW Gate ─────────────────────────────────────────
+function showNsfwGate(room) {
+    const gate = document.getElementById('nsfwGate')
+    if (!gate) return
+    document.getElementById('nsfwGateRoom').textContent = `#${room}`
+    gate.style.display = 'flex'
+}
+window.confirmNsfw = function() {
+    document.getElementById('nsfwGate').style.display = 'none'
+}
+window.denyNsfw = function() {
+    document.getElementById('nsfwGate').style.display = 'none'
+    chatScreen.style.display = 'none'
+    joinOverlay.style.display = 'flex'
+}
+
+// ── Image Download ────────────────────────────────────
+window.downloadImage = function(el) {
+    const src = el.dataset.src || el.src || el.href
+    if (!src) return
+    const a = document.createElement('a')
+    a.href = src
+    a.download = el.dataset.name || 'void-image.jpg'
+    a.click()
+}
 
 // ═══════════════════════════════════════════════════════
 //  RESPONSIVE LAYOUT
