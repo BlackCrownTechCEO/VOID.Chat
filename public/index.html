@@ -234,7 +234,7 @@
         <p class="join-lead">Select a channel, group, or friend to start</p>
         <form id="formJoin" novalidate>
           <div class="input-group">
-            <label for="roomInput">Channel name</label>
+            <label for="roomInput">Channel name <span class="label-badge--optional">optional</span></label>
             <input type="text" id="roomInput" placeholder="e.g. general" autocomplete="off"/>
           </div>
           <div class="input-group" id="passwordGroup" style="display:none">
@@ -242,11 +242,21 @@
             <input type="password" id="roomPassword" placeholder="Room password"/>
             <span class="field-error" id="passwordError" style="display:none"></span>
           </div>
-          <button type="submit" class="btn-primary btn-full">
+          <button type="submit" class="btn-primary btn-full" id="joinChannelBtn" style="display:none">
             <span>Join Channel</span><span class="btn-arrow">→</span>
           </button>
         </form>
+        <button class="btn-primary btn-full" id="browseBtn">
+          Browse channels &amp; friends →
+        </button>
       </div>
+    </div>
+
+    <!-- Empty state (no channel selected) -->
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-state__icon">⬡</div>
+      <h2 class="empty-state__title">VOID</h2>
+      <p class="empty-state__sub">Select a channel, group, or friend from the sidebar to start chatting.</p>
     </div>
 
     <!-- Chat screen (channel / DM / group / server-room) -->

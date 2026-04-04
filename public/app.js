@@ -21,6 +21,7 @@ const pinSetHint      = $('pinSetHint')
 // App
 const appEl           = $('app')
 const joinOverlay     = $('joinOverlay')
+const emptyState      = $('emptyState')
 const chatScreen      = $('chatScreen')
 const joinAvatar      = $('joinAvatar')
 const joinNameEl      = $('joinName')
@@ -540,6 +541,20 @@ $('formJoin').addEventListener('submit', e => {
     if (!room || !myName) return
     passwordError.style.display = 'none'
     socket.emit('enterRoom', { name: myName, room, password: pw, voidId: myVoidId })
+})
+
+// Show Join button only when channel name is typed
+const joinChannelBtn = $('joinChannelBtn')
+roomInput.addEventListener('input', () => {
+    const hasRoom = roomInput.value.trim().length > 0
+    joinChannelBtn.style.display = hasRoom ? 'flex' : 'none'
+    $('browseBtn').style.display  = hasRoom ? 'none' : 'flex'
+})
+
+// Browse without joining a channel
+$('browseBtn').addEventListener('click', () => {
+    joinOverlay.style.display = 'none'
+    emptyState.style.display  = 'flex'
 })
 
 let roomCheckTimer = null
@@ -1102,6 +1117,7 @@ socket.on('joinSuccess', ({ name, room, isAdmin, isNsfw }) => {
     chatDisplay.innerHTML = ''
     typingUsers.clear(); activityBar.innerHTML = ''
     joinOverlay.style.display  = 'none'
+    emptyState.style.display   = 'none'
     chatScreen.style.display   = 'flex'
     if (window.showChat) window.showChat()
     currentRoomEl.textContent  = room
@@ -1210,7 +1226,8 @@ socket.on('muteStatus', ({ muted }) => {
 socket.on('kicked', ({ reason }) => {
     myRoom = ''
     chatScreen.style.display  = 'none'
-    joinOverlay.style.display = 'flex'
+    emptyState.style.display  = 'flex'
+    joinOverlay.style.display = 'none'
     setAdminUI(false)
     showToast(reason || 'You were removed', 'error')
 })
@@ -1376,8 +1393,9 @@ window.confirmNsfw = function() {
 }
 window.denyNsfw = function() {
     document.getElementById('nsfwGate').style.display = 'none'
-    chatScreen.style.display = 'none'
-    joinOverlay.style.display = 'flex'
+    chatScreen.style.display  = 'none'
+    joinOverlay.style.display = 'none'
+    emptyState.style.display  = 'flex'
 }
 
 // ── Image Download ────────────────────────────────────

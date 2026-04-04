@@ -929,3 +929,39 @@ canvas { display:block }
 .feed-card { position:relative }
 .feed-card:hover .feed-card__del { opacity:.7 }
 .feed-card__del:hover { opacity:1 !important }
+
+/* ── Empty state (no channel selected) ──────────────── */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-2);
+  color: var(--tx3);
+  user-select: none;
+}
+.empty-state__icon {
+  font-size: 3.5rem;
+  opacity: .3;
+  line-height: 1;
+}
+.empty-state__title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--tx2);
+  letter-spacing: .08em;
+}
+.empty-state__sub {
+  font-size: .85rem;
+  color: var(--tx3);
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.6;
+}
+
+/* ── Join overlay: hide Join btn by default ─────────── */
+#joinChannelBtn { display: none; }
+#browseBtn { margin-top: 4px; background: var(--bg-4); border: 1px solid var(--bdr); color: var(--tx1); }
+#browseBtn:hover { background: var(--bg-3); color: var(--tx0); }
