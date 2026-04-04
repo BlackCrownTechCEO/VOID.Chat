@@ -1,0 +1,490 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-size: 1rem;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background-color: #000;
+    color: #fff;
+}
+
+main {
+    height: 100vh;
+    padding: 1rem;
+    display: flex;
+    flex-flow: column;
+}
+
+form {
+    width: 100%;
+    margin: auto;
+    max-width: 600px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    gap: .25rem;
+}
+
+input {
+    flex-grow: 1;
+    max-width: calc(80% - .25rem);
+}
+
+button {
+    width: 20%;
+}
+
+input,
+button {
+    border-radius: 10px;
+    padding: .5rem;
+}
+
+<<<<<<< Updated upstream
+.chat-display {
+    background-color: #333;
+    list-style-type: none;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 10px;
+    margin: 1rem auto;
+    padding: 0;
+    display: flex;
+    flex-flow: column;
+    justify-content: left;
+    overflow: auto;
+    flex-grow: 1;
+}
+
+.post {
+    background-color: #eee;
+    border-radius: 10px;
+    padding: 0 0 .25rem;
+    margin: .5rem;
+    overflow: hidden;
+    flex-shrink: 0;
+=======
+.sidebar__admin-btn{
+  margin:4px 8px;width:calc(100% - 16px);
+  background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
+  color:var(--ylw);border-radius:var(--r);
+  padding:8px 12px;font-size:.83rem;font-weight:600;
+  cursor:pointer;transition:background var(--tr);text-align:left;
+}
+.sidebar__admin-btn:hover{background:rgba(226, 11, 245, 0.15)}
+
+.sidebar__footer{border-top:1px solid var(--bdr);padding:8px}
+
+.void-id-sidebar{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 8px;border-radius:var(--r);
+  cursor:default;margin-bottom:4px;
+  background:var(--bg-3);
+}
+.void-id-sidebar__icon{color:var(--cyan);font-size:.9rem}
+.void-id-sidebar__val{
+  flex:1;font-family:monospace;font-size:.75rem;
+  letter-spacing:.06em;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;
+}
+
+.user-profile{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 8px;border-radius:var(--r);
+  transition:background var(--tr);cursor:default;
+}
+.user-profile:hover{background:var(--bg-3)}
+.profile-avatar{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:700;color:#6a16ca;flex-shrink:0;
+}
+.profile-meta{flex:1;overflow:hidden}
+.profile-name{font-size:.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-status{font-size:.7rem}
+
+/* ── Chat wrap ──────────────────────────────────────────── */
+.chat-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;background:var(--bg-2)}
+
+/* Join overlay */
+.join-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(9,9,12,.82);backdrop-filter:blur(10px);z-index:50;
+}
+.join-card{
+  background:var(--bg-3);border:1px solid var(--bdr);
+  border-radius:var(--rxl);padding:32px 36px;
+  width:100%;max-width:380px;
+  box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 40px var(--acc-glow);
+  animation:fadeUp .25s ease;
+  display:flex;flex-direction:column;gap:16px;
+}
+.join-header{display:flex;align-items:center;gap:12px}
+.join-avatar{
+  width:48px;height:48px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;font-weight:700;color:#cb9ee0;flex-shrink:0;
+  border:2px solid var(--bdr);
+}
+.join-name{font-size:1rem;font-weight:700}
+.join-vid{font-size:.72rem;color:var(--tx2);font-family:monospace;letter-spacing:.04em}
+.join-lead{font-size:.82rem;color:var(--tx2)}
+
+/* ── Chat screen ────────────────────────────────────────── */
+.chat-screen{display:flex!important;flex-direction:column;height:100%;overflow:hidden}
+
+.chat-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;height:50px;
+  background:var(--bg-2);border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.chat-header__left{display:flex;align-items:center;gap:8px}
+.ch-hash{font-size:1.15rem;color:var(--tx2);font-weight:700}
+.ch-name{font-size:.94rem;font-weight:700}
+.ch-badge{
+  font-size:.68rem;background:rgba(34,197,94,.08);
+  border:1px solid rgba(34,197,94,.2);color:var(--grn);
+  border-radius:10px;padding:2px 8px;
+}
+.ch-admin-badge{
+  font-size:.68rem;background:rgba(245,158,11,.1);
+  border:1px solid rgba(245,158,11,.25);color:var(--ylw);
+  border-radius:10px;padding:2px 8px;
+}
+.chat-header__right{display:flex;gap:4px}
+
+/* Pinned bar */
+.pinned-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px;background:rgba(245,158,11,.07);
+  border-bottom:1px solid rgba(245,158,11,.15);flex-shrink:0;
+}
+.pinned-bar__icon{color:var(--ylw);font-size:.9rem}
+.pinned-bar__text{flex:1;font-size:.82rem;color:var(--tx1)}
+
+/* Search bar */
+.search-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px;background:var(--bg-1);
+  border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.search-bar input{
+  flex:1;background:var(--bg-in);border:1px solid var(--bdr);
+  color:var(--tx0);border-radius:var(--r);padding:6px 12px;
+  font-size:.84rem;outline:none;transition:border-color var(--tr);
+}
+.search-bar input:focus{border-color:var(--acc)}
+
+/* Messages */
+.chat-body{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.chat-display{flex:1;list-style:none;overflow-y:auto;padding:12px 0;display:flex;flex-direction:column}
+
+.msg--system{display:flex;justify-content:center;padding:3px 0;margin:2px 16px}
+.msg__system-text{font-size:.76rem;color:var(--tx3);background:var(--bg-3);border-radius:20px;padding:3px 14px}
+
+.msg--separator{
+  display:flex;align-items:center;margin:10px 16px 6px;gap:10px;list-style:none;
+}
+.msg--separator::before,.msg--separator::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.msg--separator span{font-size:.7rem;color:var(--tx3);white-space:nowrap}
+
+.msg{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:5px 16px;position:relative;border-radius:var(--r);
+  transition:background var(--tr);list-style:none;
+}
+.msg:hover{background:var(--bg-3)}
+.msg:hover .msg__actions{opacity:1;pointer-events:all}
+
+.msg--broadcast{
+  background:rgba(245,158,11,.06)!important;
+  border-left:3px solid var(--ylw);
+  margin:4px 12px;border-radius:0 var(--r) var(--r) 0;
+>>>>>>> Stashed changes
+}
+
+.post--left {
+    width: 60%;
+    align-self: flex-start;
+}
+
+.post--right {
+    width: 60%;
+    align-self: flex-end;
+}
+
+.post__header {
+    color: #fff;
+    padding: .25rem .5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem;
+}
+
+.post__header--user {
+    background-color: blue;
+}
+
+.post__header--reply {
+    background-color: purple;
+}
+
+.post__header--name {
+    font-weight: bold;
+}
+
+.post__header--time {
+    font-size: .8rem;
+}
+
+.post__text {
+    margin-top: 5px;
+    color: #333;
+    padding: .25rem .5rem;
+}
+
+.user-list,
+.room-list,
+.activity {
+    width: 100%;
+    min-height: 2.65rem;
+    margin: 0 auto;
+    max-width: 600px;
+    padding: .75rem .25rem;
+}
+
+<<<<<<< Updated upstream
+.activity {
+    font-style: italic;
+}
+=======
+/* Active call overlay */
+.call-overlay{
+  position:fixed;inset:0;background:rgba(9,9,12,.92);
+  backdrop-filter:blur(16px);z-index:600;
+  display:flex;align-items:center;justify-content:center;
+}
+.call-ui{
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  width:100%;max-width:700px;padding:24px;
+}
+.call-videos{position:relative;width:100%;aspect-ratio:16/9;max-height:60vh;background:var(--bg-3);border-radius:var(--rxl);overflow:hidden;border:1px solid var(--bdr)}
+.call-vid{width:100%;height:100%;object-fit:cover;display:block}
+.call-vid--remote{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.call-vid--local{
+  position:absolute;bottom:12px;right:12px;
+  width:120px;height:80px;border-radius:10px;
+  object-fit:cover;border:2px solid var(--bdr);z-index:2;
+}
+.call-remote-av{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:4rem;font-weight:700;color:#fff;z-index:1;
+}
+.call-info{display:flex;align-items:center;gap:12px;color:var(--tx0)}
+.call-peer{font-size:1.1rem;font-weight:700}
+.call-status{font-size:.84rem;color:var(--tx2)}
+.call-timer{font-size:.9rem;color:var(--grn);font-family:monospace;font-weight:600}
+.call-controls{display:flex;gap:10px;align-items:center}
+.call-ctrl{
+  width:52px;height:52px;border-radius:50%;border:none;
+  background:var(--bg-4);color:var(--tx0);font-size:1.2rem;
+  cursor:pointer;transition:all var(--tr);border:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+}
+.call-ctrl:hover{background:var(--bg-3);transform:scale(1.06)}
+.call-ctrl--off{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red)}
+.call-ctrl--end{background:var(--red)!important;border-color:var(--red)!important;color:#fff!important;width:60px;height:60px;font-size:1.3rem}
+.call-ctrl--end:hover{background:#dc2626!important}
+
+/* ══════════════════════════════════════════════════════════
+   NEW v4 — Friends · Groups · Owner · Enhanced Admin
+══════════════════════════════════════════════════════════ */
+
+/* ── Sidebar role buttons ───────────────────────────────── */
+.sidebar__role-btn{
+  margin:3px 8px;width:calc(100% - 16px);padding:8px 12px;
+  font-size:.82rem;font-weight:600;cursor:pointer;
+  border-radius:var(--r);text-align:left;border:1px solid;
+  transition:background var(--tr);
+}
+.sidebar__role-btn--admin{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.2);color:var(--ylw)}
+.sidebar__role-btn--admin:hover{background:rgba(245,158,11,.16)}
+.sidebar__role-btn--owner{background:rgba(91,108,245,.1);border-color:rgba(91,108,245,.3);color:#a5b4fc}
+.sidebar__role-btn--owner:hover{background:rgba(91,108,245,.18)}
+.sidebar__role-btn--claim{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.2);color:var(--grn);margin-top:4px}
+.sidebar__role-btn--claim:hover{background:rgba(34,197,94,.14)}
+
+/* ── Notification dot ───────────────────────────────────── */
+.notif-dot{
+  background:var(--red);color:#fff;font-size:.65rem;font-weight:700;
+  border-radius:50%;width:16px;height:16px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+
+/* ── item-empty ─────────────────────────────────────────── */
+.item-empty{font-size:.78rem;color:var(--tx3);padding:7px 10px;font-style:italic}
+
+/* ── Friend items ───────────────────────────────────────── */
+.friend-item{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 10px;border-radius:var(--r);
+  cursor:pointer;color:var(--tx1);font-size:.87rem;
+  transition:background var(--tr);position:relative;
+}
+.friend-item:hover{background:var(--bg-3);color:var(--tx0)}
+.friend-item--active{background:var(--acc-glow);color:var(--tx0)}
+.friend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--tx3)}
+.friend-dot--online{background:var(--grn)}
+.friend-dot--idle{background:var(--ylw)}
+.friend-dot--dnd{background:var(--red)}
+.friend-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.friend-dm-btn{opacity:0;transition:opacity var(--tr)}
+.friend-item:hover .friend-dm-btn{opacity:1}
+.friend-unread{
+  background:var(--acc);color:#fff;font-size:.62rem;font-weight:700;
+  border-radius:10px;padding:1px 5px;min-width:16px;text-align:center;
+  flex-shrink:0;
+}
+
+/* ── Group items ────────────────────────────────────────── */
+.group-item{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 10px;border-radius:var(--r);
+  cursor:pointer;color:var(--tx2);font-size:.87rem;
+  transition:background var(--tr);
+}
+.group-item:hover{background:var(--bg-3);color:var(--tx1)}
+.group-item--active{background:var(--acc-glow);color:var(--tx0);font-weight:600}
+.group-hex{font-size:1rem;flex-shrink:0}
+.group-item__info{flex:1;overflow:hidden}
+.group-item__name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.group-item__role{font-size:.65rem;color:var(--tx3)}
+
+/* ── Chat header variants ───────────────────────────────── */
+.ch-topic{
+  font-size:.75rem;color:var(--tx2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:200px;margin-left:4px;
+}
+.ch-owner-badge{
+  font-size:.68rem;background:rgba(91,108,245,.1);
+  border:1px solid rgba(91,108,245,.3);color:#a5b4fc;
+  border-radius:10px;padding:2px 8px;
+}
+.dm-av{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+
+/* ── Topic bar ──────────────────────────────────────────── */
+.topic-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 14px;background:rgba(91,108,245,.06);
+  border-bottom:1px solid rgba(91,108,245,.12);
+  font-size:.8rem;color:var(--tx2);flex-shrink:0;
+}
+
+/* ── DM chat header ─────────────────────────────────────── */
+.chat-header[data-mode="dm"] .ch-badge{display:none}
+.chat-header[data-mode="group"] .ch-badge{display:none}
+
+/* ── Group friend invite list ───────────────────────────── */
+.g-friend-list{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto}
+.g-friend-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:var(--r);
+  background:var(--bg-4);border:1px solid var(--bdr);
+}
+.g-friend-row__name{flex:1;font-size:.84rem}
+
+/* ── Admin user row extras ──────────────────────────────── */
+.warn-badge{
+  font-size:.64rem;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);
+  color:var(--ylw);border-radius:8px;padding:1px 6px;
+}
+
+/* ── Audit log ──────────────────────────────────────────── */
+.audit-log{
+  margin-top:8px;max-height:240px;overflow-y:auto;
+  border:1px solid var(--bdr);border-radius:var(--r);
+}
+.audit-row{
+  display:grid;grid-template-columns:60px 1fr 1fr 70px;
+  gap:6px;padding:6px 10px;font-size:.76rem;
+  border-bottom:1px solid var(--bdr);
+  color:var(--tx2);
+}
+.audit-row:last-child{border-bottom:none}
+.audit-row:nth-child(odd){background:rgba(255,255,255,.02)}
+.audit-action{color:var(--acc-h);font-weight:600}
+.audit-time{color:var(--tx3);text-align:right}
+
+/* ── Owner panel stats ──────────────────────────────────── */
+.owner-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  padding:4px 0;
+}
+.owner-stat-card{
+  background:var(--bg-4);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:12px 14px;text-align:center;
+}
+.owner-stat-card__val{font-size:1.6rem;font-weight:800;color:var(--acc)}
+.owner-stat-card__lbl{font-size:.72rem;color:var(--tx2);margin-top:2px}
+.owner-room-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 10px;background:var(--bg-4);border-radius:var(--r);
+  border:1px solid var(--bdr);margin-bottom:4px;
+}
+.owner-room-row__info{font-size:.84rem}
+.owner-room-row__count{font-size:.75rem;color:var(--tx2)}
+
+/* ── Warn notification (in chat) ────────────────────────── */
+.msg--warn{
+  background:rgba(245,158,11,.07)!important;
+  border-left:3px solid var(--ylw);
+  margin:4px 12px;border-radius:0 var(--r) var(--r) 0;
+}
+
+/* ── Group invite popup ─────────────────────────────────── */
+#groupInvitePopup{border-color:var(--acc);box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 20px var(--acc-glow)}
+#groupInvitePopup .incoming-call__pulse{border-color:var(--acc)}
+
+/* ── Check label ────────────────────────────────────────── */
+.check-label{
+  display:flex;align-items:center;gap:8px;
+  font-size:.84rem;color:var(--tx1);cursor:pointer;user-select:none;
+}
+.check-label input[type=checkbox]{width:16px;height:16px;accent-color:var(--acc);cursor:pointer}
+
+/* ── Message delete button ──────────────────────────────── */
+.msg-action-btn--del:hover{color:var(--red)!important}
+
+/* ── MOTD bar ───────────────────────────────────────────── */
+.motd-bar{
+  position:fixed;top:0;left:0;right:0;z-index:90;
+  background:linear-gradient(90deg,var(--acc),var(--cyan));
+  color:#fff;font-size:.8rem;font-weight:600;
+  padding:7px 16px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 2px 12px rgba(0,0,0,.4);
+  animation:fadeIn .3s ease;
+}
+.motd-bar__close{margin-left:auto;background:none;border:none;color:#fff;cursor:pointer;font-size:.9rem}
+
+/* ── DM unread badge on friend list ─────────────────────── */
+.sidebar__section .notif-dot{margin-left:4px}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media(max-width:768px){
+  .sidebar{width:52px;min-width:52px}
+  .sidebar__section,.sidebar__footer,.sidebar__logo .logo-text{display:none}
+  .users-panel{display:none}
+  .call-vid--local{width:80px;height:55px}
+}
+>>>>>>> Stashed changes
