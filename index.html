@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<<<<<<< Updated upstream
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link href="style.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"
+        integrity="sha512-Xm9qbB6Pu06k3PUwPj785dyTl6oHxgsv9nHp7ej7nCpAqGZT3OZpsELuCYX05DdonFpTlBpXMOxjavIAIUwr0w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script defer src="app.js"></script>
+=======
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VOID — BlackCrownTech</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"
+    integrity="sha512-Xm9qbB6Pu06k3PUwPj785dyTl6oHxgsv9nHp7ej7nCpAqGZT3OZpsELuCYX05DdonFpTlBpXMOxjavIAIUwr0w=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="app.js"></script>
+>>>>>>> Stashed changes
+</head>
+
+<body>
+<<<<<<< Updated upstream
+    <main>
+        <form class="form-join">
+            <input type="text" id="name" maxlength="8" placeholder="Your name" size="5" required>
+            <input type="text" id="room" placeholder="Chat room" size="5" required>
+            <button id="join" type="submit">Join</button>
+=======
+
+<!-- ══════════════════════════════════════════════
+     IDENTITY SCREEN
+══════════════════════════════════════════════ -->
+<div class="id-screen" id="idScreen">
+  <div class="id-card">
+    <div class="id-brand">
+      <span class="id-brand__hex">⬡</span>
+      <div>
+        <h1 class="id-brand__name">VOID</h1>
+        <p class="id-brand__sub">by <strong>BlackCrownTech</strong></p>
+      </div>
+    </div>
+    <div class="id-tagline">
+      <span class="id-tag">🔒 No phone</span>
+      <span class="id-tag">🚫 No email</span>
+      <span class="id-tag">👤 No tracking</span>
+    </div>
+    <div class="void-id-box">
+      <div class="void-id-label">Your VOID ID</div>
+      <div class="void-id-row">
+        <span class="void-id-val" id="voidIdDisplay">V·······</span>
+        <button class="btn-icon" id="copyVoidId"  title="Copy">📋</button>
+        <button class="btn-icon" id="regenVoidId" title="New ID">🔄</button>
+      </div>
+      <p class="void-id-hint">Anonymous ID — stored only on your device.</p>
+    </div>
+    <!-- PIN unlock (returning user) -->
+    <div id="pinUnlockSection" style="display:none">
+      <p class="id-section-title">🔐 Enter PIN to continue</p>
+      <div class="pin-dots" id="pinDots"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="pin-pad" id="pinPad">
+        <button class="pin-key" data-k="1">1</button><button class="pin-key" data-k="2">2</button><button class="pin-key" data-k="3">3</button>
+        <button class="pin-key" data-k="4">4</button><button class="pin-key" data-k="5">5</button><button class="pin-key" data-k="6">6</button>
+        <button class="pin-key" data-k="7">7</button><button class="pin-key" data-k="8">8</button><button class="pin-key" data-k="9">9</button>
+        <button class="pin-key pin-key--wide" data-k="new">Use new identity</button>
+        <button class="pin-key" data-k="0">0</button>
+        <button class="pin-key" data-k="del">⌫</button>
+      </div>
+      <p class="field-error" id="pinUnlockError" style="display:none">Incorrect PIN</p>
+    </div>
+    <!-- Setup form -->
+    <div id="idSetupSection">
+      <div class="input-group">
+        <label for="nicknameInput">Nickname</label>
+        <input type="text" id="nicknameInput" maxlength="20" placeholder="Choose a nickname" autocomplete="off"/>
+      </div>
+      <div class="input-group">
+        <label>PIN <span class="label-badge--optional">optional · locks your ID</span></label>
+        <div class="pin-dots" id="pinSetDots"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="pin-pad" id="pinSetPad">
+          <button class="pin-key" data-k="1">1</button><button class="pin-key" data-k="2">2</button><button class="pin-key" data-k="3">3</button>
+          <button class="pin-key" data-k="4">4</button><button class="pin-key" data-k="5">5</button><button class="pin-key" data-k="6">6</button>
+          <button class="pin-key" data-k="7">7</button><button class="pin-key" data-k="8">8</button><button class="pin-key" data-k="9">9</button>
+          <button class="pin-key pin-key--wide" data-k="skip">Skip PIN</button>
+          <button class="pin-key" data-k="0">0</button>
+          <button class="pin-key" data-k="del">⌫</button>
+        </div>
+        <p class="pin-hint" id="pinSetHint">Enter 4–6 digits or skip</p>
+      </div>
+      <button class="btn-primary btn-full" id="enterVoidBtn" disabled>
+        <span>Enter VOID</span><span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     APP SHELL
+══════════════════════════════════════════════ -->
+<div class="app" id="app" style="display:none">
+
+  <!-- ── Sidebar ──────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <span class="logo-hex">⬡</span>
+      <span class="logo-text">VOID</span>
+    </div>
+
+    <!-- Channels -->
+    <div class="sidebar__section">
+      <div class="section-header">
+        <span class="section-title">Channels</span>
+        <button class="btn-icon" id="createRoomBtn" title="New channel">＋</button>
+      </div>
+      <ul class="room-list" id="roomList"><li class="item-empty">No active channels</li></ul>
+    </div>
+
+    <!-- Groups -->
+    <div class="sidebar__section">
+      <div class="section-header">
+        <span class="section-title">Groups</span>
+        <button class="btn-icon" id="createGroupBtn" title="New group">＋</button>
+      </div>
+      <ul class="room-list" id="groupList"><li class="item-empty">No groups yet</li></ul>
+    </div>
+
+    <!-- Friends -->
+    <div class="sidebar__section">
+      <div class="section-header">
+        <span class="section-title">Friends</span>
+        <span class="notif-dot" id="friendReqDot" style="display:none">!</span>
+        <button class="btn-icon" id="addFriendBtn" title="Manage friends">＋</button>
+      </div>
+      <ul class="room-list" id="friendList"><li class="item-empty">No friends yet</li></ul>
+    </div>
+
+    <!-- Admin (conditional) -->
+    <div class="sidebar__section" id="adminSideSection" style="display:none">
+      <div class="section-header"><span class="section-title">Admin</span></div>
+      <button class="sidebar__role-btn sidebar__role-btn--admin" id="sideAdminBtn">👑 Admin Panel</button>
+    </div>
+
+    <!-- Owner (conditional) -->
+    <div class="sidebar__section" id="ownerSideSection" style="display:none">
+      <div class="section-header"><span class="section-title">Server Owner</span></div>
+      <button class="sidebar__role-btn sidebar__role-btn--owner" id="ownerPanelBtn">🌐 Server Panel</button>
+      <button class="sidebar__role-btn sidebar__role-btn--claim" id="claimOwnerBtn">🔑 Claim Ownership</button>
+    </div>
+
+    <div class="sidebar__footer">
+      <div class="void-id-sidebar">
+        <span class="void-id-sidebar__icon">⬡</span>
+        <span class="void-id-sidebar__val" id="sideVoidIdVal">—</span>
+        <button class="btn-icon" id="sideVoidCopy" title="Copy VOID ID">📋</button>
+      </div>
+      <div class="user-profile">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div class="profile-meta">
+          <div class="profile-name" id="profileName">Not connected</div>
+          <div class="profile-status status--online" id="profileStatus">● Online</div>
+        </div>
+        <button class="btn-icon" id="settingsBtn" title="Settings">⚙</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Chat wrap ─────────────────────────────── -->
+  <div class="chat-wrap">
+
+    <!-- Join overlay -->
+    <div class="join-overlay" id="joinOverlay">
+      <div class="join-card">
+        <div class="join-header">
+          <div class="join-avatar" id="joinAvatar">?</div>
+          <div>
+            <div class="join-name" id="joinName">—</div>
+            <div class="join-vid"  id="joinVid">VOID ID: —</div>
+          </div>
+        </div>
+        <p class="join-lead">Select a channel, group, or friend to start</p>
+        <form id="formJoin" novalidate>
+          <div class="input-group">
+            <label for="roomInput">Channel name</label>
+            <input type="text" id="roomInput" placeholder="e.g. general" autocomplete="off"/>
+          </div>
+          <div class="input-group" id="passwordGroup" style="display:none">
+            <label for="roomPassword">Password <span class="label-badge">🔒 Protected</span></label>
+            <input type="password" id="roomPassword" placeholder="Room password"/>
+            <span class="field-error" id="passwordError" style="display:none"></span>
+          </div>
+          <button type="submit" class="btn-primary btn-full">
+            <span>Join Channel</span><span class="btn-arrow">→</span>
+          </button>
+>>>>>>> Stashed changes
+        </form>
+
+<<<<<<< Updated upstream
+        <ul class="chat-display"></ul>
+
+        <p class="user-list"></p>
+
+        <p class="room-list"></p>
+
+        <p class="activity"></p>
+
+        <form class="form-msg">
+            <input type="text" id="message" placeholder="Your message" required>
+            <button type="submit">Send</button>
+        </form>
+    </main>
+=======
+    <!-- Chat screen (room / DM / group) -->
+    <div class="chat-screen" id="chatScreen" style="display:none">
+
+      <!-- Header — mode: room -->
+      <header class="chat-header" id="chatHeader">
+        <div class="chat-header__left">
+          <!-- Room mode -->
+          <span class="ch-prefix" id="chPrefix">#</span>
+          <span class="ch-name"   id="chName">—</span>
+          <span class="ch-topic"  id="chTopic"></span>
+          <span class="ch-lock"   id="chLock"   style="display:none" title="Locked">🔒</span>
+          <span class="ch-badge"  id="chBadge">🔒 Secure</span>
+          <span class="ch-owner-badge" id="chOwnerBadge"  style="display:none">⭐ Owner</span>
+          <span class="ch-admin-badge" id="chAdminBadge"  style="display:none">👑 Admin</span>
+        </div>
+        <div class="chat-header__right">
+          <button class="btn-icon" id="dmCallAudio" style="display:none" title="Voice call">📞</button>
+          <button class="btn-icon" id="dmCallVideo" style="display:none" title="Video call">📹</button>
+          <button class="btn-icon" id="groupSettingsBtn" style="display:none" title="Group settings">⚙</button>
+          <button class="btn-icon" id="adminPanelBtn"    style="display:none" title="Admin panel">👑</button>
+          <button class="btn-icon" id="ownerRoomBtn"     style="display:none" title="Owner tools">🌐</button>
+          <button class="btn-icon" id="searchBtn"        title="Search">🔍</button>
+          <button class="btn-icon" id="toggleUsersBtn"   title="Toggle users">👥</button>
+        </div>
+      </header>
+
+      <!-- Pinned bar -->
+      <div class="pinned-bar" id="pinnedBar" style="display:none">
+        <span>📌</span>
+        <span class="pinned-bar__text" id="pinnedText"></span>
+        <button class="btn-icon" id="pinnedClose">✕</button>
+      </div>
+
+      <!-- Topic bar -->
+      <div class="topic-bar" id="topicBar" style="display:none">
+        <span>📋</span>
+        <span id="topicText"></span>
+      </div>
+
+      <!-- Search bar -->
+      <div class="search-bar" id="searchBar" style="display:none">
+        <input type="text" id="searchInput" placeholder="Search messages…" autocomplete="off"/>
+        <button class="btn-icon" id="searchClose">✕</button>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-body">
+        <ul class="chat-display" id="chatDisplay"></ul>
+        <div class="activity-bar" id="activityBar"></div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="chat-footer">
+        <div class="reply-preview" id="replyPreview" style="display:none">
+          <span class="rp-icon">↩</span>
+          <div class="rp-body">Replying to <strong id="replyToName"></strong>
+            <span id="replyToText" class="rp-snip"></span></div>
+          <button class="btn-icon" id="cancelReply">✕</button>
+        </div>
+        <div class="slow-bar" id="slowBar" style="display:none"><span id="slowCountdown">⏳ 5s</span></div>
+        <div class="input-row">
+          <button class="btn-icon" id="attachBtn"  title="Attach image URL">📎</button>
+          <input  type="text"      id="msgInput"   placeholder="Message…" autocomplete="off"/>
+          <button class="btn-icon" id="emojiBtn"   title="Emoji">😊</button>
+          <button class="send-btn" id="sendBtn">Send</button>
+        </div>
+        <div class="emoji-picker" id="emojiPicker" style="display:none"></div>
+      </footer>
+    </div><!-- /chat-screen -->
+  </div><!-- /chat-wrap -->
+
+  <!-- ── Users / Members panel ─────────────────── -->
+  <aside class="users-panel" id="usersPanel">
+    <div class="panel-header">
+      <span id="panelTitle">Online</span>
+      <span class="online-badge" id="onlineCount">0</span>
+    </div>
+    <ul class="users-list" id="usersList"></ul>
+  </aside>
+
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════ -->
+
+<!-- Create Channel -->
+<div class="modal-overlay" id="createRoomModal" style="display:none">
+  <div class="modal">
+    <div class="modal__hdr"><h3>Create Channel</h3><button class="btn-icon" id="closeCreateModal">✕</button></div>
+    <form id="createRoomForm">
+      <div class="input-group"><label># Channel name</label><input type="text" id="newRoomName" placeholder="e.g. gaming" maxlength="30" autocomplete="off" required/></div>
+      <div class="input-group"><label>Password <span class="label-badge--optional">optional</span></label><input type="password" id="newRoomPassword" placeholder="Leave blank for public"/></div>
+      <div class="modal__actions"><button type="button" class="btn-secondary" id="cancelCreate">Cancel</button><button type="submit" class="btn-primary">Create</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Create Group -->
+<div class="modal-overlay" id="createGroupModal" style="display:none">
+  <div class="modal">
+    <div class="modal__hdr"><h3>⬡ Create Group</h3><button class="btn-icon" id="closeCreateGroupModal">✕</button></div>
+    <form id="createGroupForm">
+      <div class="input-group"><label>Group name</label><input type="text" id="newGroupName" placeholder="e.g. Dev Team" maxlength="30" autocomplete="off" required/></div>
+      <div class="input-group"><label>Description <span class="label-badge--optional">optional</span></label><input type="text" id="newGroupDesc" placeholder="What's this group about?" maxlength="80"/></div>
+      <div class="input-group"><label>Password <span class="label-badge--optional">optional</span></label><input type="password" id="newGroupPassword" placeholder="Leave blank for open join"/></div>
+      <label class="check-label"><input type="checkbox" id="newGroupPrivate"/> <span>Private (invite-only)</span></label>
+      <div class="modal__actions"><button type="button" class="btn-secondary" id="cancelCreateGroup">Cancel</button><button type="submit" class="btn-primary">Create Group</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Group Settings -->
+<div class="modal-overlay" id="groupSettingsModal" style="display:none">
+  <div class="modal modal--wide">
+    <div class="modal__hdr"><h3>⬡ Group: <span id="gSettingsName">—</span></h3><button class="btn-icon" id="closeGroupSettings">✕</button></div>
+    <div class="admin-tabs">
+      <button class="admin-tab admin-tab--active" data-gtab="members">👥 Members</button>
+      <button class="admin-tab" data-gtab="manage">⚙ Manage</button>
+      <button class="admin-tab" data-gtab="invite">📩 Invite</button>
+    </div>
+    <!-- Members -->
+    <div class="admin-panel" id="gTab-members">
+      <div id="gMemberList" class="admin-user-list"></div>
+    </div>
+    <!-- Manage -->
+    <div class="admin-panel" id="gTab-manage" style="display:none">
+      <div class="input-group"><label>📋 Topic</label>
+        <div class="row-gap"><input type="text" id="gTopicInput" placeholder="Set group topic…"/><button class="btn-primary" id="gTopicBtn">Set</button></div>
+      </div>
+      <div class="admin-tool-grid" style="margin-top:12px">
+        <button class="admin-tool-btn admin-tool-btn--danger" id="gDeleteBtn">🗑 Delete Group</button>
+      </div>
+      <div class="input-group" style="margin-top:12px"><label>Transfer ownership to</label>
+        <div class="row-gap"><input type="text" id="gTransferInput" placeholder="Member name…"/><button class="btn-primary" id="gTransferBtn">Transfer</button></div>
+      </div>
+    </div>
+    <!-- Invite -->
+    <div class="admin-panel" id="gTab-invite" style="display:none">
+      <div class="input-group"><label>Invite by VOID ID</label>
+        <div class="row-gap"><input type="text" id="gInviteInput" placeholder="VOID ID e.g. VABC1234"/><button class="btn-primary" id="gInviteBtn">Invite</button></div>
+      </div>
+      <div class="input-group" style="margin-top:10px"><label>Or invite a friend</label>
+        <div id="gFriendInviteList" class="g-friend-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Friend Manager -->
+<div class="modal-overlay" id="friendModal" style="display:none">
+  <div class="modal modal--wide">
+    <div class="modal__hdr"><h3>👥 Friends</h3><button class="btn-icon" id="closeFriendModal">✕</button></div>
+    <div class="admin-tabs">
+      <button class="admin-tab admin-tab--active" data-ftab="add">➕ Add</button>
+      <button class="admin-tab" data-ftab="requests">📩 Requests <span class="notif-dot" id="reqTabDot" style="display:none">!</span></button>
+      <button class="admin-tab" data-ftab="list">👥 Friends</button>
+    </div>
+    <!-- Add friend -->
+    <div class="admin-panel" id="fTab-add">
+      <div class="input-group"><label>Enter VOID ID</label>
+        <div class="row-gap"><input type="text" id="friendAddInput" placeholder="e.g. VABC1234" maxlength="8" style="text-transform:uppercase"/><button class="btn-primary" id="friendAddBtn">Send Request</button></div>
+      </div>
+      <p class="settings-hint" style="margin-top:8px">Share your VOID ID so others can add you: <strong id="myVoidIdDisplay2">—</strong></p>
+    </div>
+    <!-- Requests -->
+    <div class="admin-panel" id="fTab-requests" style="display:none">
+      <div id="friendRequestList" class="admin-user-list">
+        <p class="item-empty" style="padding:8px 0">No pending requests.</p>
+      </div>
+    </div>
+    <!-- Friends list -->
+    <div class="admin-panel" id="fTab-list" style="display:none">
+      <div id="friendManagerList" class="admin-user-list">
+        <p class="item-empty" style="padding:8px 0">No friends yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="modal-overlay" id="settingsModal" style="display:none">
+  <div class="modal">
+    <div class="modal__hdr"><h3>⚙ Settings</h3><button class="btn-icon" id="closeSettings">✕</button></div>
+    <div class="settings-block">
+      <label class="settings-label">Status</label>
+      <div class="status-opts" id="statusOptions">
+        <button class="status-opt status-opt--active" data-status="online">🟢 Online</button>
+        <button class="status-opt" data-status="idle">🟡 Idle</button>
+        <button class="status-opt" data-status="dnd">🔴 Do Not Disturb</button>
+      </div>
+    </div>
+    <div class="settings-block">
+      <label class="settings-label">Your VOID ID</label>
+      <div class="void-id-row"><span class="void-id-val" id="settingsVoidId">—</span><button class="btn-icon" id="settingsCopyVoid" title="Copy">📋</button></div>
+      <p class="settings-hint">Share this ID so others can add you as a friend.</p>
+    </div>
+    <div class="settings-block">
+      <label class="settings-label">About</label>
+      <p class="settings-about">VOID v4.0 · Friends · Groups · Calls<br>By <strong>BlackCrownTech</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div class="modal-overlay" id="adminModal" style="display:none">
+  <div class="modal modal--wide">
+    <div class="modal__hdr"><h3>👑 Admin Panel — #<span id="adminRoomName">—</span></h3><button class="btn-icon" id="closeAdminModal">✕</button></div>
+    <div class="admin-tabs">
+      <button class="admin-tab admin-tab--active" data-tab="users">👥 Users</button>
+      <button class="admin-tab" data-tab="room">🏠 Room</button>
+      <button class="admin-tab" data-tab="mod">🛡 Moderation</button>
+      <button class="admin-tab" data-tab="cmds">📋 Commands</button>
+    </div>
+    <!-- Users -->
+    <div class="admin-panel" id="adminTab-users"><div id="adminUserList" class="admin-user-list"></div></div>
+    <!-- Room -->
+    <div class="admin-panel" id="adminTab-room" style="display:none">
+      <div class="admin-tool-grid">
+        <button class="admin-tool-btn" id="aLockBtn">🔒 Lock</button>
+        <button class="admin-tool-btn" id="aUnlockBtn">🔓 Unlock</button>
+        <button class="admin-tool-btn admin-tool-btn--danger" id="aClearBtn">🗑 Clear Chat</button>
+        <button class="admin-tool-btn" id="aUnpinBtn">📌 Unpin</button>
+      </div>
+      <div class="input-group" style="margin-top:12px"><label>📌 Pin message</label><div class="row-gap"><input type="text" id="aPinInput" placeholder="Message to pin…"/><button class="btn-primary" id="aPinBtn">Pin</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>📢 Broadcast</label><div class="row-gap"><input type="text" id="aBroadcastInput" placeholder="Announcement…"/><button class="btn-primary" id="aBroadcastBtn">Send</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>📋 Topic</label><div class="row-gap"><input type="text" id="aTopicInput" placeholder="Channel topic…"/><button class="btn-primary" id="aTopicBtn">Set</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>👋 Welcome message</label><div class="row-gap"><input type="text" id="aWelcomeInput" placeholder="Shown when users join…"/><button class="btn-primary" id="aWelcomeBtn">Set</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>🐌 Slow mode (secs, 0=off)</label><div class="row-gap"><input type="number" id="aSlowInput" min="0" max="300" placeholder="0" style="width:80px"/><button class="btn-primary" id="aSlowBtn">Set</button></div></div>
+    </div>
+    <!-- Moderation -->
+    <div class="admin-panel" id="adminTab-mod" style="display:none">
+      <div class="input-group"><label>⚠ Warn user</label><div class="row-gap"><input type="text" id="aWarnInput" placeholder="@username"/><button class="btn-primary" id="aWarnBtn">Warn</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>🔇 Temp mute (name · minutes)</label><div class="row-gap"><input type="text" id="aTempMuteUser" placeholder="@username" style="flex:2"/><input type="number" id="aTempMuteMins" placeholder="mins" min="1" max="60" style="width:70px"/><button class="btn-primary" id="aTempMuteBtn">Mute</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>🚫 Word filter — add word</label><div class="row-gap"><input type="text" id="aFilterInput" placeholder="word to block"/><button class="btn-primary" id="aFilterAddBtn">Add</button><button class="btn-secondary" id="aFilterRemBtn">Remove</button></div></div>
+      <button class="admin-tool-btn" id="aAuditBtn" style="margin-top:10px;width:100%">📋 View Audit Log</button>
+      <div id="auditLogView" class="audit-log" style="display:none"></div>
+    </div>
+    <!-- Commands -->
+    <div class="admin-panel" id="adminTab-cmds" style="display:none">
+      <div class="cmd-list">
+        <div class="cmd-row"><code>/kick @name</code><span>Kick user</span></div>
+        <div class="cmd-row"><code>/ban @name</code><span>Ban by VOID ID</span></div>
+        <div class="cmd-row"><code>/mute @name</code><span>Toggle mute</span></div>
+        <div class="cmd-row"><code>/tempmute @name 5</code><span>Temp mute (minutes)</span></div>
+        <div class="cmd-row"><code>/warn @name</code><span>Issue warning (3 = auto-kick)</span></div>
+        <div class="cmd-row"><code>/clearwarns @name</code><span>Clear warnings</span></div>
+        <div class="cmd-row"><code>/promote @name</code><span>Give admin rights</span></div>
+        <div class="cmd-row"><code>/demote @name</code><span>Remove admin rights</span></div>
+        <div class="cmd-row"><code>/broadcast text</code><span>Announcement to all</span></div>
+        <div class="cmd-row"><code>/pin message</code><span>Pin a message</span></div>
+        <div class="cmd-row"><code>/unpin</code><span>Remove pin</span></div>
+        <div class="cmd-row"><code>/topic text</code><span>Set channel topic</span></div>
+        <div class="cmd-row"><code>/welcome text</code><span>Set welcome message</span></div>
+        <div class="cmd-row"><code>/filter word</code><span>Add word filter</span></div>
+        <div class="cmd-row"><code>/unfilter word</code><span>Remove word filter</span></div>
+        <div class="cmd-row"><code>/clear</code><span>Clear chat history</span></div>
+        <div class="cmd-row"><code>/lock · /unlock</code><span>Lock / unlock channel</span></div>
+        <div class="cmd-row"><code>/slow 10</code><span>Slow mode (seconds)</span></div>
+        <div class="cmd-row"><code>/delmsg &lt;id&gt;</code><span>Delete a message by ID</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Owner / Server Panel -->
+<div class="modal-overlay" id="ownerModal" style="display:none">
+  <div class="modal modal--wide">
+    <div class="modal__hdr"><h3>🌐 Server Panel</h3><button class="btn-icon" id="closeOwnerModal">✕</button></div>
+    <div class="admin-tabs">
+      <button class="admin-tab admin-tab--active" data-otab="overview">📊 Overview</button>
+      <button class="admin-tab" data-otab="users">👥 All Users</button>
+      <button class="admin-tab" data-otab="rooms">🏠 Rooms</button>
+      <button class="admin-tab" data-otab="bans">🚫 Bans</button>
+      <button class="admin-tab" data-otab="settings">⚙ Settings</button>
+    </div>
+    <!-- Overview -->
+    <div class="admin-panel" id="oTab-overview">
+      <div class="owner-stats" id="ownerStats">Loading…</div>
+    </div>
+    <!-- All Users -->
+    <div class="admin-panel" id="oTab-users" style="display:none">
+      <div id="ownerUserList" class="admin-user-list"></div>
+    </div>
+    <!-- Rooms -->
+    <div class="admin-panel" id="oTab-rooms" style="display:none">
+      <div id="ownerRoomList" class="admin-user-list"></div>
+    </div>
+    <!-- Bans -->
+    <div class="admin-panel" id="oTab-bans" style="display:none">
+      <div class="input-group"><label>🌐 Global ban VOID ID</label><div class="row-gap"><input type="text" id="oGlobalBanInput" placeholder="VOID ID"/><button class="btn-primary admin-tool-btn--danger" id="oGlobalBanBtn">Ban</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>✅ Unban VOID ID</label><div class="row-gap"><input type="text" id="oGlobalUnbanInput" placeholder="VOID ID"/><button class="btn-primary" id="oGlobalUnbanBtn">Unban</button></div></div>
+      <div id="ownerBanList" style="margin-top:10px" class="admin-user-list"></div>
+    </div>
+    <!-- Settings -->
+    <div class="admin-panel" id="oTab-settings" style="display:none">
+      <div class="input-group"><label>📝 MOTD (shown on connect)</label><div class="row-gap"><input type="text" id="oMotdInput" placeholder="Message of the day…"/><button class="btn-primary" id="oMotdBtn">Set</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>📢 Server Announce (all users)</label><div class="row-gap"><input type="text" id="oAnnounceInput" placeholder="Global announcement…"/><button class="btn-primary" id="oAnnounceBtn">Announce</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>⭐ Promote to Server Owner (VOID ID)</label><div class="row-gap"><input type="text" id="oPromoteInput" placeholder="VOID ID"/><button class="btn-primary" id="oPromoteBtn">Promote</button></div></div>
+      <div class="input-group" style="margin-top:10px"><label>❌ Revoke Owner (VOID ID)</label><div class="row-gap"><input type="text" id="oRevokeInput" placeholder="VOID ID"/><button class="btn-secondary" id="oRevokeBtn">Revoke</button></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Claim Owner modal -->
+<div class="modal-overlay" id="claimOwnerModal" style="display:none">
+  <div class="modal">
+    <div class="modal__hdr"><h3>🔑 Claim Server Ownership</h3><button class="btn-icon" id="closeClaimOwner">✕</button></div>
+    <div class="input-group"><label>Owner key</label><input type="password" id="ownerKeyInput" placeholder="Enter owner key…"/></div>
+    <p class="settings-hint">The server owner key is set via the <code>VOID_OWNER_KEY</code> environment variable.</p>
+    <div class="modal__actions"><button class="btn-secondary" id="cancelClaimOwner">Cancel</button><button class="btn-primary" id="submitClaimOwner">Claim</button></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CALL UI
+══════════════════════════════════════════════ -->
+<div class="incoming-call" id="incomingCall" style="display:none">
+  <div class="incoming-call__pulse"></div>
+  <div class="incoming-call__info">
+    <div class="incoming-call__av" id="incomingAv">?</div>
+    <div class="incoming-call__meta">
+      <strong id="incomingName">—</strong>
+      <span   id="incomingType">📹 Video call</span>
+    </div>
+  </div>
+  <div class="incoming-call__btns">
+    <button id="acceptCall"  class="call-btn call-btn--accept" title="Accept">📞</button>
+    <button id="rejectCall"  class="call-btn call-btn--reject" title="Decline">📵</button>
+  </div>
+</div>
+
+<!-- Group invite popup -->
+<div class="incoming-call" id="groupInvitePopup" style="display:none">
+  <div class="incoming-call__info">
+    <div class="incoming-call__av" id="gInviteColor" style="font-size:1.3rem">⬡</div>
+    <div class="incoming-call__meta">
+      <strong id="gInviteName">Group</strong>
+      <span   id="gInviteBy">Invited by —</span>
+    </div>
+  </div>
+  <div class="incoming-call__btns">
+    <button id="acceptGroupInviteBtn"  class="call-btn call-btn--accept" title="Join">✓</button>
+    <button id="declineGroupInviteBtn" class="call-btn call-btn--reject" title="Decline">✕</button>
+  </div>
+</div>
+
+<!-- Active call overlay -->
+<div class="call-overlay" id="callOverlay" style="display:none">
+  <div class="call-ui">
+    <div class="call-videos">
+      <video id="remoteVideo" autoplay playsinline class="call-vid call-vid--remote"></video>
+      <div   class="call-remote-av" id="callRemoteAv" style="display:none">?</div>
+      <video id="localVideo"  autoplay playsinline muted class="call-vid call-vid--local"></video>
+    </div>
+    <div class="call-info">
+      <span class="call-peer"   id="callWithName">—</span>
+      <span class="call-status" id="callStatus">Calling…</span>
+      <span class="call-timer"  id="callTimer" style="display:none">00:00</span>
+    </div>
+    <div class="call-controls">
+      <button class="call-ctrl" id="ctrlMic"    title="Mute">🎤</button>
+      <button class="call-ctrl" id="ctrlCam"    title="Camera">📹</button>
+      <button class="call-ctrl" id="ctrlScreen" title="Screen share">🖥</button>
+      <button class="call-ctrl call-ctrl--end" id="ctrlHangup" title="End">📵</button>
+    </div>
+  </div>
+</div>
+
+>>>>>>> Stashed changes
+</body>
+
+</html>
