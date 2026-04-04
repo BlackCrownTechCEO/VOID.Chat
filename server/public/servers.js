@@ -57,8 +57,14 @@ function renderServerList() {
         li.innerHTML = `
           <div class="server-header" data-server="${window.escHtml(s.id)}">
             <div class="msg__avatar" style="background:${window.avatarColor(s.name)};width:28px;height:28px;font-size:.65rem;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">${window.initials(s.name)}</div>
-            <span class="server-name">${window.escHtml(s.name)}</span>
-            <span style="font-size:.68rem;color:var(--tx3)">${s.memberCount}m</span>
+            <div class="server-header__info">
+              <span class="server-name">${window.escHtml(s.name)}</span>
+              <div class="server-id-row">
+                <span class="server-id-chip">${window.escHtml(s.id)}</span>
+                <button class="btn-icon server-id-copy" data-id="${window.escHtml(s.id)}" title="Copy Server ID">📋</button>
+              </div>
+            </div>
+            <span style="font-size:.68rem;color:var(--tx3);flex-shrink:0">${s.memberCount}m</span>
             ${isOwnerOrAdmin ? `<button class="btn-icon" data-action="add-group" data-server="${window.escHtml(s.id)}" title="Add category">＋</button>` : ''}
           </div>
           ${expanded ? `<div class="server-groups">${groupsHtml}</div>` : ''}`
@@ -98,6 +104,18 @@ function renderServerList() {
             e.stopPropagation()
             const name = prompt('Room name:')
             if (name?.trim()) window.socket.emit('createServerRoom', { serverId: btn.dataset.server, groupId: btn.dataset.group, name: name.trim() })
+        })
+    })
+
+    // Copy Server ID
+    serverListEl.querySelectorAll('.server-id-copy').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.stopPropagation()
+            navigator.clipboard.writeText(btn.dataset.id).then(() => {
+                window.showToast('Server ID copied!', 'ok')
+            }).catch(() => {
+                window.showToast(btn.dataset.id, 'ok')
+            })
         })
     })
 }

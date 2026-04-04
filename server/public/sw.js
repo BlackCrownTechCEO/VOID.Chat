@@ -2,7 +2,7 @@
 //  sw.js — VOID Service Worker  ·  PWA offline shell
 // ═══════════════════════════════════════════════════════
 
-const CACHE  = 'void-v7'
+const CACHE  = 'void-v8'
 const STATIC = [
     '/',
     '/style.css',
@@ -10,6 +10,7 @@ const STATIC = [
     '/crypto.js',
     '/settings.js',
     '/dms.js',
+    '/voidflashes.js',
     '/friends.js',
     '/groups.js',
     '/servers.js',

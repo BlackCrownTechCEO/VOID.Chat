@@ -110,11 +110,14 @@ window.renderVoidFlash = function(msg, li) {
         name: msg.name, fromVoidId: msg.fromVoidId || ''
     })
     const timer = msg.vfExpiry === 0 ? '👁 View once' : `⏱ ${msg.vfExpiry / 1000}s`
+    const thumbHtml = msg.vfThumb
+        ? `<div class="vf-thumb-wrap"><img src="${window.escHtml(msg.vfThumb)}" class="vf-thumb" alt=""></div>`
+        : `<span class="vf-icon">⚡</span>`
     li.innerHTML = `
       <div class="vf-overlay" onclick="openVoidFlash(this)">
-        <span class="vf-icon">⚡</span>
+        ${thumbHtml}
         <div>
-          <div class="vf-from">VoidFlash from ${window.escHtml(msg.name)}</div>
+          <div class="vf-from">⚡ VoidFlash from ${window.escHtml(msg.name)}</div>
           <div class="vf-meta">${timer} · 🔒 E2E</div>
         </div>
         <span class="vf-tap">TAP →</span>

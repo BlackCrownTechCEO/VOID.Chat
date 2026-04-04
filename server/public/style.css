@@ -542,7 +542,12 @@ canvas { display:block }
   border-radius:var(--r); cursor:pointer; font-size:.84rem;
   transition:background var(--tr) }
 .server-header:hover { background:var(--bg3) }
-.server-name { flex:1; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.server-name { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block }
+.server-header__info { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px }
+.server-id-row { display:flex; align-items:center; gap:3px }
+.server-id-chip { font-size:.62rem; color:var(--tx3); font-family:monospace; letter-spacing:.05em }
+.server-id-copy { width:18px; height:18px; font-size:.65rem; opacity:.55; padding:0 }
+.server-id-copy:hover { opacity:1 }
 .server-groups { padding-left:10px }
 .server-group { margin-top:4px }
 .server-group__header { display:flex; align-items:center; gap:6px;
@@ -862,3 +867,5 @@ canvas { display:block }
 .msg--ghost { color:var(--tx3); font-size:.78rem; font-style:italic; padding:4px 0;
   list-style:none }
 .vf-image { max-width:min(280px,85%); border-radius:8px; margin-bottom:6px }
+.vf-thumb-wrap { width:36px; height:36px; border-radius:6px; overflow:hidden; flex-shrink:0 }
+.vf-thumb { width:100%; height:100%; object-fit:cover; filter:blur(4px) brightness(.7) }
