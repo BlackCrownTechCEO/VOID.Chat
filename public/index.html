@@ -3,13 +3,22 @@
 
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>VOID — BlackCrownTech</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#07070f"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="VOID"/>
+  <link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+
   <link rel="stylesheet" href="style.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"
     integrity="sha512-Xm9qbB6Pu06k3PUwPj785dyTl6oHxgsv9nHp7ej7nCpAqGZT3OZpsELuCYX05DdonFpTlBpXMOxjavIAIUwr0w=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script defer src="app.js"></script>
 </head>
 
 <body>
@@ -90,51 +99,86 @@
     <div class="sidebar__logo">
       <span class="logo-hex">⬡</span>
       <span class="logo-text">VOID</span>
+      <button class="sidebar__feed-btn" id="openFeedBtn" title="VOID Feed">◈</button>
     </div>
 
-    <!-- Channels -->
-    <div class="sidebar__section">
-      <div class="section-header">
-        <span class="section-title">Channels</span>
-        <button class="btn-icon" id="createRoomBtn" title="New channel">＋</button>
+    <!-- Tab nav -->
+    <div class="sidebar__tabs" id="sidebarTabs">
+      <button class="sidebar-tab sidebar-tab--active" data-panel="chat">Chat</button>
+      <button class="sidebar-tab" data-panel="friends">Friends<span class="tab-dot" id="friendsTabDot" style="display:none"></span></button>
+      <button class="sidebar-tab" data-panel="dms">DMs<span class="tab-dot" id="dmsTabDot" style="display:none"></span></button>
+      <button class="sidebar-tab" data-panel="groups">Groups</button>
+      <button class="sidebar-tab" data-panel="servers">Servers</button>
+    </div>
+
+    <!-- Chat panel -->
+    <div class="sidebar__panel" id="panel-chat">
+      <div class="sidebar__section">
+        <div class="section-header">
+          <span class="section-title">Channels</span>
+          <button class="btn-icon" id="createRoomBtn" title="New channel">＋</button>
+        </div>
+        <ul class="room-list" id="roomList">
+          <li class="item-empty">No active channels</li>
+        </ul>
       </div>
-      <ul class="room-list" id="roomList"><li class="item-empty">No active channels</li></ul>
-    </div>
-
-    <!-- Groups -->
-    <div class="sidebar__section">
-      <div class="section-header">
-        <span class="section-title">Groups</span>
-        <button class="btn-icon" id="createGroupBtn" title="New group">＋</button>
+      <div class="sidebar__section" id="adminSideSection" style="display:none">
+        <div class="section-header"><span class="section-title">Admin</span></div>
+        <button class="sidebar__admin-btn" id="sideAdminBtn">👑 Admin Panel</button>
       </div>
-      <ul class="room-list" id="groupList"><li class="item-empty">No groups yet</li></ul>
     </div>
 
-    <!-- Friends -->
-    <div class="sidebar__section">
-      <div class="section-header">
-        <span class="section-title">Friends</span>
-        <span class="notif-dot" id="friendReqDot" style="display:none">!</span>
-        <button class="btn-icon" id="addFriendBtn" title="Manage friends">＋</button>
+    <!-- Friends panel -->
+    <div class="sidebar__panel" id="panel-friends" style="display:none">
+      <div class="sidebar__section">
+        <div class="section-header">
+          <span class="section-title">Friends</span>
+          <button class="btn-icon" id="addFriendBtn" title="Add friend">＋</button>
+        </div>
+        <div id="pendingReqsSection" style="display:none">
+          <div class="section-subheader">
+            Pending <span id="pendingCount" class="notif-dot">0</span>
+          </div>
+          <ul id="pendingList"></ul>
+        </div>
+        <ul id="friendsList"><li class="item-empty">No friends yet</li></ul>
       </div>
-      <ul class="room-list" id="friendList"><li class="item-empty">No friends yet</li></ul>
     </div>
 
-    <!-- Admin (conditional) -->
-    <div class="sidebar__section" id="adminSideSection" style="display:none">
-      <div class="section-header"><span class="section-title">Admin</span></div>
-      <button class="sidebar__role-btn sidebar__role-btn--admin" id="sideAdminBtn">👑 Admin Panel</button>
+    <!-- DMs panel -->
+    <div class="sidebar__panel" id="panel-dms" style="display:none">
+      <div class="sidebar__section">
+        <div class="section-header"><span class="section-title">Direct Messages</span></div>
+        <ul id="dmList"><li class="item-empty">No DMs yet — add friends first</li></ul>
+      </div>
     </div>
 
-    <!-- Owner (conditional) -->
-    <div class="sidebar__section" id="ownerSideSection" style="display:none">
-      <div class="section-header"><span class="section-title">Server Owner</span></div>
-      <button class="sidebar__role-btn sidebar__role-btn--owner" id="ownerPanelBtn">🌐 Server Panel</button>
-      <button class="sidebar__role-btn sidebar__role-btn--claim" id="claimOwnerBtn">🔑 Claim Ownership</button>
+    <!-- Groups panel -->
+    <div class="sidebar__panel" id="panel-groups" style="display:none">
+      <div class="sidebar__section">
+        <div class="section-header">
+          <span class="section-title">Groups</span>
+          <button class="btn-icon" id="createGroupBtn" title="Create or join group">＋</button>
+        </div>
+        <ul id="groupList"><li class="item-empty">No groups yet</li></ul>
+      </div>
+    </div>
+
+    <!-- Servers panel -->
+    <div class="sidebar__panel" id="panel-servers" style="display:none">
+      <div class="sidebar__section">
+        <div class="section-header">
+          <span class="section-title">Servers</span>
+          <button class="btn-icon" id="createServerBtn" title="Create or join server">＋</button>
+        </div>
+        <ul id="serverList"><li class="item-empty">No servers yet</li></ul>
+      </div>
     </div>
 
     <div class="sidebar__footer">
-      <div class="void-id-sidebar">
+      <button class="sidebar__role-btn sidebar__role-btn--owner" id="ownerPanelBtn" style="display:none">⭐ Owner Panel</button>
+      <button class="sidebar__role-btn sidebar__role-btn--claim" id="claimOwnerBtn">🔑 Claim Owner</button>
+      <div class="void-id-sidebar" id="sideVoidId" title="Your VOID ID">
         <span class="void-id-sidebar__icon">⬡</span>
         <span class="void-id-sidebar__val" id="sideVoidIdVal">—</span>
         <button class="btn-icon" id="sideVoidCopy" title="Copy VOID ID">📋</button>
@@ -148,6 +192,30 @@
         <button class="btn-icon" id="settingsBtn" title="Settings">⚙</button>
       </div>
     </div>
+
+    <!-- Mobile bottom tab bar -->
+    <nav class="tab-bar" id="tabBar">
+      <button class="tab-item tab-item--active" data-panel="chat">
+        <span class="tab-icon">💬</span><span class="tab-label">Chats</span>
+      </button>
+      <button class="tab-item" data-panel="friends">
+        <span class="tab-icon">👥</span><span class="tab-label">Friends</span>
+        <span class="tab-dot" id="friendsTabDotM" style="display:none"></span>
+      </button>
+      <button class="tab-item" data-panel="groups">
+        <span class="tab-icon">⬡</span><span class="tab-label">Groups</span>
+      </button>
+      <button class="tab-item" data-panel="servers">
+        <span class="tab-icon">🌐</span><span class="tab-label">Servers</span>
+      </button>
+      <button class="tab-item" data-panel="dms">
+        <span class="tab-icon">✉</span><span class="tab-label">DMs</span>
+        <span class="tab-dot" id="dmsTabDotM" style="display:none"></span>
+      </button>
+      <button class="tab-item" id="openFeedBtnM">
+        <span class="tab-icon">◈</span><span class="tab-label">Feed</span>
+      </button>
+    </nav>
   </aside>
 
   <!-- ── Chat wrap ─────────────────────────────── -->
@@ -178,30 +246,32 @@
             <span>Join Channel</span><span class="btn-arrow">→</span>
           </button>
         </form>
+      </div>
+    </div>
 
-    <!-- Chat screen (room / DM / group) -->
-    <div class="chat-screen" id="chatScreen" style="display:none">
+    <!-- Chat screen (channel / DM / group / server-room) -->
+    <div class="chat-screen" id="chatScreen" data-mode="channel" style="display:none">
 
-      <!-- Header — mode: room -->
       <header class="chat-header" id="chatHeader">
         <div class="chat-header__left">
-          <!-- Room mode -->
-          <span class="ch-prefix" id="chPrefix">#</span>
-          <span class="ch-name"   id="chName">—</span>
+          <button class="back-btn" id="backBtn">‹</button>
+          <span class="ch-prefix ch-hash" id="chPrefix">#</span>
+          <span class="ch-name"   id="currentRoom">—</span>
           <span class="ch-topic"  id="chTopic"></span>
           <span class="ch-lock"   id="chLock"   style="display:none" title="Locked">🔒</span>
           <span class="ch-badge"  id="chBadge">🔒 Secure</span>
-          <span class="ch-owner-badge" id="chOwnerBadge"  style="display:none">⭐ Owner</span>
-          <span class="ch-admin-badge" id="chAdminBadge"  style="display:none">👑 Admin</span>
+          <span class="ch-badge ch-badge--e2e" id="e2eBadge" style="display:none" title="End-to-end encryption coming soon">🔒 E2E Ready</span>
+          <span class="ch-owner-badge" id="chOwnerBadge" style="display:none">⭐ Owner</span>
+          <span class="ch-admin-badge" id="chAdminBadge" style="display:none">👑 Admin</span>
         </div>
         <div class="chat-header__right">
-          <button class="btn-icon" id="dmCallAudio" style="display:none" title="Voice call">📞</button>
-          <button class="btn-icon" id="dmCallVideo" style="display:none" title="Video call">📹</button>
+          <button class="btn-icon" id="dmCallAudio"     style="display:none" title="Voice call">📞</button>
+          <button class="btn-icon" id="dmCallVideo"     style="display:none" title="Video call">📹</button>
           <button class="btn-icon" id="groupSettingsBtn" style="display:none" title="Group settings">⚙</button>
-          <button class="btn-icon" id="adminPanelBtn"    style="display:none" title="Admin panel">👑</button>
-          <button class="btn-icon" id="ownerRoomBtn"     style="display:none" title="Owner tools">🌐</button>
-          <button class="btn-icon" id="searchBtn"        title="Search">🔍</button>
-          <button class="btn-icon" id="toggleUsersBtn"   title="Toggle users">👥</button>
+          <button class="btn-icon" id="adminPanelBtn"   style="display:none" title="Admin panel">👑</button>
+          <button class="btn-icon" id="ownerRoomBtn"    style="display:none" title="Owner tools">🌐</button>
+          <button class="btn-icon" id="searchBtn"       title="Search">🔍</button>
+          <button class="btn-icon" id="toggleUsersBtn"  title="Toggle users">👥</button>
         </div>
       </header>
 
@@ -239,10 +309,42 @@
           <button class="btn-icon" id="cancelReply">✕</button>
         </div>
         <div class="slow-bar" id="slowBar" style="display:none"><span id="slowCountdown">⏳ 5s</span></div>
-        <div class="input-row">
-          <button class="btn-icon" id="attachBtn"  title="Attach image URL">📎</button>
-          <input  type="text"      id="msgInput"   placeholder="Message…" autocomplete="off"/>
-          <button class="btn-icon" id="emojiBtn"   title="Emoji">😊</button>
+        <div id="attachChip" class="attach-chip" style="display:none">
+          <span id="attachChipName"></span>
+          <span class="attach-chip__remove" id="attachChipRemove">✕</span>
+        </div>
+        <div id="vfBar" style="display:none">
+          <span style="font-size:1rem">⚡</span>
+          <span class="vf-bar__label">VOIDFLASH</span>
+          <button class="vf-timer vf-timer--active" data-ms="0">👁 Once</button>
+          <button class="vf-timer" data-ms="3000">3s</button>
+          <button class="vf-timer" data-ms="5000">5s</button>
+          <button class="vf-timer" data-ms="10000">10s</button>
+          <button class="vf-timer" data-ms="30000">30s</button>
+        </div>
+        <div class="input-row" style="position:relative">
+          <div class="attach-wrap">
+            <button class="btn-icon" id="attachBtn" title="Attach file">📎</button>
+            <div class="attach-menu" id="attachMenu" style="display:none">
+              <div class="attach-opt" id="attachImageOpt">
+                <span class="attach-opt__icon">🖼</span>Image
+                <div style="font-size:.65rem;color:var(--tx3)">png jpg gif webp</div>
+              </div>
+              <div class="attach-opt" id="attachFileOpt">
+                <span class="attach-opt__icon">📄</span>File
+                <div style="font-size:.65rem;color:var(--tx3)">any type</div>
+              </div>
+              <div class="attach-opt attach-opt--cam" id="attachCamOpt">
+                <span class="attach-opt__icon">📷</span>Camera
+                <div style="font-size:.65rem;color:#7b2fff88">live</div>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="filePickerImage" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none"/>
+          <input type="file" id="filePickerAny"   style="display:none"/>
+          <input  type="text" id="msgInput" placeholder="Message…" autocomplete="off"/>
+          <button class="btn-icon" id="vfToggleBtn" title="VoidFlash">⚡</button>
+          <button class="btn-icon" id="emojiBtn"    title="Emoji">😊</button>
           <button class="send-btn" id="sendBtn">Send</button>
         </div>
         <div class="emoji-picker" id="emojiPicker" style="display:none"></div>
@@ -273,20 +375,6 @@
       <div class="input-group"><label># Channel name</label><input type="text" id="newRoomName" placeholder="e.g. gaming" maxlength="30" autocomplete="off" required/></div>
       <div class="input-group"><label>Password <span class="label-badge--optional">optional</span></label><input type="password" id="newRoomPassword" placeholder="Leave blank for public"/></div>
       <div class="modal__actions"><button type="button" class="btn-secondary" id="cancelCreate">Cancel</button><button type="submit" class="btn-primary">Create</button></div>
-    </form>
-  </div>
-</div>
-
-<!-- Create Group -->
-<div class="modal-overlay" id="createGroupModal" style="display:none">
-  <div class="modal">
-    <div class="modal__hdr"><h3>⬡ Create Group</h3><button class="btn-icon" id="closeCreateGroupModal">✕</button></div>
-    <form id="createGroupForm">
-      <div class="input-group"><label>Group name</label><input type="text" id="newGroupName" placeholder="e.g. Dev Team" maxlength="30" autocomplete="off" required/></div>
-      <div class="input-group"><label>Description <span class="label-badge--optional">optional</span></label><input type="text" id="newGroupDesc" placeholder="What's this group about?" maxlength="80"/></div>
-      <div class="input-group"><label>Password <span class="label-badge--optional">optional</span></label><input type="password" id="newGroupPassword" placeholder="Leave blank for open join"/></div>
-      <label class="check-label"><input type="checkbox" id="newGroupPrivate"/> <span>Private (invite-only)</span></label>
-      <div class="modal__actions"><button type="button" class="btn-secondary" id="cancelCreateGroup">Cancel</button><button type="submit" class="btn-primary">Create Group</button></div>
     </form>
   </div>
 </div>
@@ -328,157 +416,428 @@
   </div>
 </div>
 
-<!-- Friend Manager -->
-<div class="modal-overlay" id="friendModal" style="display:none">
-  <div class="modal modal--wide">
-    <div class="modal__hdr"><h3>👥 Friends</h3><button class="btn-icon" id="closeFriendModal">✕</button></div>
-    <div class="admin-tabs">
-      <button class="admin-tab admin-tab--active" data-ftab="add">➕ Add</button>
-      <button class="admin-tab" data-ftab="requests">📩 Requests <span class="notif-dot" id="reqTabDot" style="display:none">!</span></button>
-      <button class="admin-tab" data-ftab="list">👥 Friends</button>
-    </div>
-    <!-- Add friend -->
-    <div class="admin-panel" id="fTab-add">
-      <div class="input-group"><label>Enter VOID ID</label>
-        <div class="row-gap"><input type="text" id="friendAddInput" placeholder="e.g. VABC1234" maxlength="8" style="text-transform:uppercase"/><button class="btn-primary" id="friendAddBtn">Send Request</button></div>
-      </div>
-      <p class="settings-hint" style="margin-top:8px">Share your VOID ID so others can add you: <strong id="myVoidIdDisplay2">—</strong></p>
-    </div>
-    <!-- Requests -->
-    <div class="admin-panel" id="fTab-requests" style="display:none">
-      <div id="friendRequestList" class="admin-user-list">
-        <p class="item-empty" style="padding:8px 0">No pending requests.</p>
-      </div>
-    </div>
-    <!-- Friends list -->
-    <div class="admin-panel" id="fTab-list" style="display:none">
-      <div id="friendManagerList" class="admin-user-list">
-        <p class="item-empty" style="padding:8px 0">No friends yet.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Settings -->
 <div class="modal-overlay" id="settingsModal" style="display:none">
-  <div class="modal">
+  <div class="modal modal--settings">
+    <div class="sheet-handle"></div>
     <div class="modal__hdr"><h3>⚙ Settings</h3><button class="btn-icon" id="closeSettings">✕</button></div>
-    <div class="settings-block">
-      <label class="settings-label">Status</label>
-      <div class="status-opts" id="statusOptions">
-        <button class="status-opt status-opt--active" data-status="online">🟢 Online</button>
-        <button class="status-opt" data-status="idle">🟡 Idle</button>
-        <button class="status-opt" data-status="dnd">🔴 Do Not Disturb</button>
+    <div class="settings-layout">
+      <!-- Sidebar (desktop) / section list (mobile) -->
+      <nav class="settings-nav" id="settingsNav">
+        <div class="settings-account-card" id="settingsAccountCard">
+          <div class="profile-avatar" id="settingsAvatar" style="width:40px;height:40px;font-size:.9rem;border-radius:14px">?</div>
+          <div>
+            <div class="settings-account-name" id="settingsAccountName">—</div>
+            <div class="settings-account-vid" id="settingsAccountVid">—</div>
+          </div>
+        </div>
+        <button class="settings-nav-item settings-nav-item--active" data-stab="appearance">🎨 Appearance</button>
+        <button class="settings-nav-item" data-stab="notifications">🔔 Notifications</button>
+        <button class="settings-nav-item" data-stab="privacy">👁 Privacy</button>
+        <button class="settings-nav-item" data-stab="security">🔐 Security</button>
+        <button class="settings-nav-item" data-stab="account">👤 Account</button>
+        <button class="settings-nav-item settings-nav-item--danger" data-stab="danger">🗑 Reset</button>
+      </nav>
+      <!-- Content panels -->
+      <div class="settings-content">
+        <!-- Appearance -->
+        <div class="settings-panel" id="sTab-appearance">
+          <h3 class="settings-panel-title">Appearance</h3>
+          <div class="settings-group">
+            <label class="settings-label">Theme</label>
+            <div class="settings-seg" id="themeOpts">
+              <button class="seg-btn seg-btn--active" data-theme="dark">Dark</button>
+              <button class="seg-btn" data-theme="darker">Darker</button>
+              <button class="seg-btn" data-theme="amoled">AMOLED</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Accent Color</label>
+            <div class="swatch-row" id="accentOpts">
+              <button class="swatch swatch--active" data-accent="#00e5ff" style="background:#00e5ff" title="Cyan"></button>
+              <button class="swatch" data-accent="#7b2fff" style="background:#7b2fff" title="Purple"></button>
+              <button class="swatch" data-accent="#ff2d78" style="background:#ff2d78" title="Pink"></button>
+              <button class="swatch" data-accent="#22c55e" style="background:#22c55e" title="Green"></button>
+              <button class="swatch" data-accent="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+              <button class="swatch" data-accent="#e4e6eb" style="background:#e4e6eb" title="White"></button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Font Size</label>
+            <div class="settings-seg" id="fontSizeOpts">
+              <button class="seg-btn" data-fs="small">Small</button>
+              <button class="seg-btn seg-btn--active" data-fs="medium">Medium</button>
+              <button class="seg-btn" data-fs="large">Large</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Message Density</label>
+            <div class="settings-seg" id="densityOpts">
+              <button class="seg-btn seg-btn--active" data-density="cozy">💬 Cozy</button>
+              <button class="seg-btn" data-density="compact">≡ Compact</button>
+            </div>
+          </div>
+        </div>
+        <!-- Notifications -->
+        <div class="settings-panel" id="sTab-notifications" style="display:none">
+          <h3 class="settings-panel-title">Notifications</h3>
+          <div class="settings-group">
+            <div class="settings-row"><span>Message sounds</span><label class="toggle-wrap"><input type="checkbox" id="sndMessages" checked/><span class="toggle-pill"></span></label></div>
+            <div class="settings-row"><span>DM sounds</span><label class="toggle-wrap"><input type="checkbox" id="sndDms" checked/><span class="toggle-pill"></span></label></div>
+            <div class="settings-row"><span>DM unread badge</span><label class="toggle-wrap"><input type="checkbox" id="dmBadge" checked/><span class="toggle-pill"></span></label></div>
+            <div class="settings-row"><span>Desktop notifications</span><button class="btn-secondary" id="reqNotifBtn" style="font-size:.75rem;padding:4px 10px">Request Permission</button></div>
+          </div>
+        </div>
+        <!-- Privacy -->
+        <div class="settings-panel" id="sTab-privacy" style="display:none">
+          <h3 class="settings-panel-title">Privacy</h3>
+          <div class="settings-group">
+            <div class="settings-row"><span>Who can DM me</span>
+              <select id="privDm" class="settings-select"><option value="everyone">Everyone</option><option value="friends">Friends only</option><option value="nobody">Nobody</option></select>
+            </div>
+            <div class="settings-row"><span>Who can add me</span>
+              <select id="privFriendReq" class="settings-select"><option value="everyone">Everyone</option><option value="nobody">Nobody</option></select>
+            </div>
+            <div class="settings-row"><span>Read receipts (✓✓)</span><label class="toggle-wrap"><input type="checkbox" id="readReceipts" checked/><span class="toggle-pill"></span></label></div>
+            <div class="settings-row"><span>Show online status</span>
+              <select id="onlineStatus" class="settings-select"><option value="everyone">Everyone</option><option value="friends">Friends</option><option value="nobody">Nobody</option></select>
+            </div>
+          </div>
+        </div>
+        <!-- Security -->
+        <div class="settings-panel" id="sTab-security" style="display:none">
+          <h3 class="settings-panel-title">Security &amp; E2E</h3>
+          <div class="settings-group">
+            <label class="settings-label">Your E2E Public Key</label>
+            <div class="settings-key-box" id="myPubKeyDisplay">Generating…</div>
+            <button class="btn-secondary" id="copyPubKeyBtn" style="margin-top:6px;font-size:.75rem">Copy Key</button>
+          </div>
+          <div class="settings-group">
+            <button class="btn-secondary" style="color:var(--acc3);border-color:var(--acc3);font-size:.8rem" id="regenKeyBtn">🔄 Regenerate Key Pair</button>
+            <p style="font-size:.7rem;color:var(--tx3);margin-top:4px">Warning: existing encrypted DMs will become unreadable.</p>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">PIN</label>
+            <button class="btn-secondary" id="changePinBtn" style="font-size:.8rem">Change PIN</button>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Session</label>
+            <div class="settings-row" style="font-size:.78rem;color:var(--tx2)"><span id="sessionInfo">—</span></div>
+          </div>
+        </div>
+        <!-- Account -->
+        <div class="settings-panel" id="sTab-account" style="display:none">
+          <h3 class="settings-panel-title">Account</h3>
+          <div class="settings-group">
+            <label class="settings-label">Display Name</label>
+            <div class="row-gap"><input type="text" id="settingsNameInput" maxlength="20" placeholder="Nickname" style="flex:1"/><button class="btn-primary" id="saveNameBtn" style="font-size:.8rem">Save</button></div>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Status</label>
+            <div class="status-opts" id="statusOptions">
+              <button class="status-opt status-opt--active" data-status="online">🟢 Online</button>
+              <button class="status-opt" data-status="idle">🟡 Idle</button>
+              <button class="status-opt" data-status="dnd">🔴 DND</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">Your VOID ID</label>
+            <div class="void-id-row"><span class="void-id-val" id="settingsVoidId">—</span><button class="btn-icon" id="settingsCopyVoid" title="Copy">📋</button></div>
+          </div>
+        </div>
+        <!-- Danger -->
+        <div class="settings-panel" id="sTab-danger" style="display:none">
+          <h3 class="settings-panel-title" style="color:var(--acc3)">Danger Zone</h3>
+          <div class="settings-group">
+            <button class="btn-primary" style="background:var(--acc3);border-color:var(--acc3)" id="clearDataBtn">🗑 Clear All Data &amp; Reset Identity</button>
+            <p style="font-size:.7rem;color:var(--tx3);margin-top:6px">Deletes your VOID ID, all settings, and E2E keys. Cannot be undone.</p>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="settings-block">
-      <label class="settings-label">Your VOID ID</label>
-      <div class="void-id-row"><span class="void-id-val" id="settingsVoidId">—</span><button class="btn-icon" id="settingsCopyVoid" title="Copy">📋</button></div>
-      <p class="settings-hint">Share this ID so others can add you as a friend.</p>
-    </div>
-    <div class="settings-block">
-      <label class="settings-label">About</label>
-      <p class="settings-about">VOID v4.0 · Friends · Groups · Calls<br>By <strong>BlackCrownTech</strong></p>
     </div>
   </div>
 </div>
 
 <!-- Admin Panel -->
 <div class="modal-overlay" id="adminModal" style="display:none">
-  <div class="modal modal--wide">
-    <div class="modal__hdr"><h3>👑 Admin Panel — #<span id="adminRoomName">—</span></h3><button class="btn-icon" id="closeAdminModal">✕</button></div>
-    <div class="admin-tabs">
-      <button class="admin-tab admin-tab--active" data-tab="users">👥 Users</button>
-      <button class="admin-tab" data-tab="room">🏠 Room</button>
-      <button class="admin-tab" data-tab="mod">🛡 Moderation</button>
-      <button class="admin-tab" data-tab="cmds">📋 Commands</button>
+  <div class="modal modal--admin">
+    <div class="sheet-handle"></div>
+    <div class="modal__hdr">
+      <h3>👑 Admin Panel — #<span id="adminRoomName">—</span></h3>
+      <button class="btn-icon" id="closeAdminModal">✕</button>
     </div>
-    <!-- Users -->
-    <div class="admin-panel" id="adminTab-users"><div id="adminUserList" class="admin-user-list"></div></div>
-    <!-- Room -->
-    <div class="admin-panel" id="adminTab-room" style="display:none">
-      <div class="admin-tool-grid">
-        <button class="admin-tool-btn" id="aLockBtn">🔒 Lock</button>
-        <button class="admin-tool-btn" id="aUnlockBtn">🔓 Unlock</button>
-        <button class="admin-tool-btn admin-tool-btn--danger" id="aClearBtn">🗑 Clear Chat</button>
-        <button class="admin-tool-btn" id="aUnpinBtn">📌 Unpin</button>
-      </div>
-      <div class="input-group" style="margin-top:12px"><label>📌 Pin message</label><div class="row-gap"><input type="text" id="aPinInput" placeholder="Message to pin…"/><button class="btn-primary" id="aPinBtn">Pin</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>📢 Broadcast</label><div class="row-gap"><input type="text" id="aBroadcastInput" placeholder="Announcement…"/><button class="btn-primary" id="aBroadcastBtn">Send</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>📋 Topic</label><div class="row-gap"><input type="text" id="aTopicInput" placeholder="Channel topic…"/><button class="btn-primary" id="aTopicBtn">Set</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>👋 Welcome message</label><div class="row-gap"><input type="text" id="aWelcomeInput" placeholder="Shown when users join…"/><button class="btn-primary" id="aWelcomeBtn">Set</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>🐌 Slow mode (secs, 0=off)</label><div class="row-gap"><input type="number" id="aSlowInput" min="0" max="300" placeholder="0" style="width:80px"/><button class="btn-primary" id="aSlowBtn">Set</button></div></div>
-    </div>
-    <!-- Moderation -->
-    <div class="admin-panel" id="adminTab-mod" style="display:none">
-      <div class="input-group"><label>⚠ Warn user</label><div class="row-gap"><input type="text" id="aWarnInput" placeholder="@username"/><button class="btn-primary" id="aWarnBtn">Warn</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>🔇 Temp mute (name · minutes)</label><div class="row-gap"><input type="text" id="aTempMuteUser" placeholder="@username" style="flex:2"/><input type="number" id="aTempMuteMins" placeholder="mins" min="1" max="60" style="width:70px"/><button class="btn-primary" id="aTempMuteBtn">Mute</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>🚫 Word filter — add word</label><div class="row-gap"><input type="text" id="aFilterInput" placeholder="word to block"/><button class="btn-primary" id="aFilterAddBtn">Add</button><button class="btn-secondary" id="aFilterRemBtn">Remove</button></div></div>
-      <button class="admin-tool-btn" id="aAuditBtn" style="margin-top:10px;width:100%">📋 View Audit Log</button>
-      <div id="auditLogView" class="audit-log" style="display:none"></div>
-    </div>
-    <!-- Commands -->
-    <div class="admin-panel" id="adminTab-cmds" style="display:none">
-      <div class="cmd-list">
-        <div class="cmd-row"><code>/kick @name</code><span>Kick user</span></div>
-        <div class="cmd-row"><code>/ban @name</code><span>Ban by VOID ID</span></div>
-        <div class="cmd-row"><code>/mute @name</code><span>Toggle mute</span></div>
-        <div class="cmd-row"><code>/tempmute @name 5</code><span>Temp mute (minutes)</span></div>
-        <div class="cmd-row"><code>/warn @name</code><span>Issue warning (3 = auto-kick)</span></div>
-        <div class="cmd-row"><code>/clearwarns @name</code><span>Clear warnings</span></div>
-        <div class="cmd-row"><code>/promote @name</code><span>Give admin rights</span></div>
-        <div class="cmd-row"><code>/demote @name</code><span>Remove admin rights</span></div>
-        <div class="cmd-row"><code>/broadcast text</code><span>Announcement to all</span></div>
-        <div class="cmd-row"><code>/pin message</code><span>Pin a message</span></div>
-        <div class="cmd-row"><code>/unpin</code><span>Remove pin</span></div>
-        <div class="cmd-row"><code>/topic text</code><span>Set channel topic</span></div>
-        <div class="cmd-row"><code>/welcome text</code><span>Set welcome message</span></div>
-        <div class="cmd-row"><code>/filter word</code><span>Add word filter</span></div>
-        <div class="cmd-row"><code>/unfilter word</code><span>Remove word filter</span></div>
-        <div class="cmd-row"><code>/clear</code><span>Clear chat history</span></div>
-        <div class="cmd-row"><code>/lock · /unlock</code><span>Lock / unlock channel</span></div>
-        <div class="cmd-row"><code>/slow 10</code><span>Slow mode (seconds)</span></div>
-        <div class="cmd-row"><code>/delmsg &lt;id&gt;</code><span>Delete a message by ID</span></div>
-      </div>
-    </div>
-  </div>
-</div>
+    <div class="admin-layout">
+      <!-- Left nav -->
+      <nav class="admin-nav">
+        <button class="admin-nav-item admin-nav-item--active" data-anav="users">👥 Users</button>
+        <button class="admin-nav-item" data-anav="room">🏠 Room</button>
+        <button class="admin-nav-item" data-anav="mod">🛡 Mod Tools</button>
+        <button class="admin-nav-item" data-anav="audit">📋 Audit</button>
+        <button class="admin-nav-item" data-anav="cmds">📋 Commands</button>
+        <button class="admin-nav-item admin-nav-item--owner" data-anav="owner" id="ownerNavItem" style="display:none">⭐ Owner</button>
+      </nav>
+      <!-- Right content -->
+      <div class="admin-content">
+        <!-- Users -->
+        <div class="admin-section" id="adminTab-users">
+          <div id="adminUserList" class="admin-user-list"></div>
+        </div>
+        <!-- Room -->
+        <div class="admin-section" id="adminTab-room" style="display:none">
+          <div class="admin-card-grid">
+            <button class="admin-card-btn" id="aLockBtn"><span class="admin-card-btn__icon">🔒</span>Lock</button>
+            <button class="admin-card-btn" id="aUnlockBtn"><span class="admin-card-btn__icon">🔓</span>Unlock</button>
+            <button class="admin-card-btn admin-card-btn--danger" id="aClearBtn"><span class="admin-card-btn__icon">🗑</span>Clear Chat</button>
+            <button class="admin-card-btn" id="aUnpinBtn"><span class="admin-card-btn__icon">📌</span>Unpin</button>
+          </div>
+          <div class="admin-card">
+            <label class="admin-card__label" for="aPinInput">📌 Pin Message</label>
+            <div class="row-gap">
+              <input type="text" id="aPinInput" placeholder="Message to pin…"/>
+              <button class="btn-primary" id="aPinBtn">Pin</button>
+            </div>
+          </div>
+          <div class="admin-card">
+            <label class="admin-card__label" for="aBroadcastInput">📢 Broadcast</label>
+            <div class="row-gap">
+              <input type="text" id="aBroadcastInput" placeholder="Announcement…"/>
+              <button class="btn-primary" id="aBroadcastBtn">Send</button>
+            </div>
+          </div>
+          <div class="admin-card">
+            <label class="admin-card__label" for="aWelcomeInput">👋 Welcome Message</label>
+            <div class="row-gap">
+              <input type="text" id="aWelcomeInput" placeholder="Shown when users join…"/>
+              <button class="btn-primary" id="aWelcomeBtn">Set</button>
+            </div>
+          </div>
+          <div class="admin-card">
+            <label class="admin-card__label" for="aSlowInput">🐌 Slow Mode <span style="font-weight:400;text-transform:none">(seconds, 0 = off)</span></label>
+            <div class="row-gap">
+              <input type="number" id="aSlowInput" min="0" max="300" placeholder="0" style="width:90px"/>
+              <button class="btn-primary" id="aSlowBtn">Set</button>
+            </div>
+          </div>
+        </div>
+        <!-- Mod Tools -->
+        <div class="admin-section" id="adminTab-mod" style="display:none">
+          <div class="admin-card">
+            <label class="admin-card__label" for="aWarnInput">⚠ Warn User</label>
+            <div class="row-gap">
+              <input type="text" id="aWarnInput" placeholder="@username"/>
+              <button class="btn-primary" id="aWarnBtn">Warn</button>
+            </div>
+          </div>
+          <div class="admin-card">
+            <label class="admin-card__label" for="aTempMuteUser">⏱ Temp Mute <span style="font-weight:400;text-transform:none">(minutes)</span></label>
+            <div class="row-gap">
+              <input type="text" id="aTempMuteUser" placeholder="@username"/>
+              <input type="number" id="aTempMuteMins" value="5" min="1" max="60" style="width:70px"/>
+              <button class="btn-primary" id="aTempMuteBtn">Mute</button>
+            </div>
+          </div>
+          <div class="admin-card">
+            <label class="admin-card__label" for="aMakeModInput">🎖 Moderator</label>
+            <div class="row-gap">
+              <input type="text" id="aMakeModInput" placeholder="@username"/>
+              <button class="btn-primary" id="aMakeModBtn">Make Mod</button>
+              <button class="btn-secondary" id="aRemoveModBtn">Remove</button>
+            </div>
+          </div>
+          <div class="admin-card">
+            <label class="admin-card__label" for="aTopicInput">💬 Set Topic</label>
+            <div class="row-gap">
+              <input type="text" id="aTopicInput" placeholder="Channel topic…"/>
+              <button class="btn-primary" id="aTopicBtn">Set</button>
+            </div>
+          </div>
+          <div class="admin-card">
+            <label class="admin-card__label" for="aFilterInput">🚫 Word Filter</label>
+            <div class="row-gap">
+              <input type="text" id="aFilterInput" placeholder="word"/>
+              <button class="btn-primary" id="aAddFilterBtn">Add</button>
+              <button class="btn-secondary" id="aRemFilterBtn">Remove</button>
+            </div>
+          </div>
+        </div>
+        <!-- Audit Log -->
+        <div class="admin-section" id="adminTab-audit" style="display:none">
+          <button class="btn-primary" id="aAuditRefreshBtn" style="align-self:flex-start">🔄 Refresh</button>
+          <div class="audit-timeline" id="auditLogContent"></div>
+        </div>
+        <!-- Commands -->
+        <div class="admin-section" id="adminTab-cmds" style="display:none">
+          <input type="text" class="admin-cmd-search" id="adminCmdSearch" placeholder="Search commands…"/>
+          <div class="cmd-list" id="adminCmdList">
+            <div class="cmd-row"><code>/kick @name</code><span>Kick user</span></div>
+            <div class="cmd-row"><code>/ban @name</code><span>Ban by VOID ID</span></div>
+            <div class="cmd-row"><code>/mute @name</code><span>Toggle mute</span></div>
+            <div class="cmd-row"><code>/tempmute @name 5</code><span>Temp mute (minutes)</span></div>
+            <div class="cmd-row"><code>/warn @name</code><span>Issue warning (3 = auto-kick)</span></div>
+            <div class="cmd-row"><code>/clearwarns @name</code><span>Clear warnings</span></div>
+            <div class="cmd-row"><code>/promote @name</code><span>Give admin rights</span></div>
+            <div class="cmd-row"><code>/demote @name</code><span>Remove admin rights</span></div>
+            <div class="cmd-row"><code>/makemod @name</code><span>Make moderator</span></div>
+            <div class="cmd-row"><code>/removemod @name</code><span>Remove moderator</span></div>
+            <div class="cmd-row"><code>/broadcast text</code><span>Announcement to all</span></div>
+            <div class="cmd-row"><code>/pin message</code><span>Pin a message</span></div>
+            <div class="cmd-row"><code>/unpin</code><span>Remove pin</span></div>
+            <div class="cmd-row"><code>/settopic text</code><span>Set channel topic</span></div>
+            <div class="cmd-row"><code>/setwelcome text</code><span>Set welcome message</span></div>
+            <div class="cmd-row"><code>/addfilter word</code><span>Add word filter</span></div>
+            <div class="cmd-row"><code>/remfilter word</code><span>Remove word filter</span></div>
+            <div class="cmd-row"><code>/clear</code><span>Clear chat history</span></div>
+            <div class="cmd-row"><code>/lock · /unlock</code><span>Lock / unlock channel</span></div>
+            <div class="cmd-row"><code>/slow 10</code><span>Slow mode (seconds)</span></div>
+            <div class="cmd-row"><code>/delmsg &lt;id&gt;</code><span>Delete a message by ID</span></div>
+            <div class="cmd-row"><code>/auditlog</code><span>View audit log</span></div>
+          </div>
+        </div>
 
-<!-- Owner / Server Panel -->
-<div class="modal-overlay" id="ownerModal" style="display:none">
-  <div class="modal modal--wide">
-    <div class="modal__hdr"><h3>🌐 Server Panel</h3><button class="btn-icon" id="closeOwnerModal">✕</button></div>
-    <div class="admin-tabs">
-      <button class="admin-tab admin-tab--active" data-otab="overview">📊 Overview</button>
-      <button class="admin-tab" data-otab="users">👥 All Users</button>
-      <button class="admin-tab" data-otab="rooms">🏠 Rooms</button>
-      <button class="admin-tab" data-otab="bans">🚫 Bans</button>
-      <button class="admin-tab" data-otab="settings">⚙ Settings</button>
-    </div>
-    <!-- Overview -->
-    <div class="admin-panel" id="oTab-overview">
-      <div class="owner-stats" id="ownerStats">Loading…</div>
-    </div>
-    <!-- All Users -->
-    <div class="admin-panel" id="oTab-users" style="display:none">
-      <div id="ownerUserList" class="admin-user-list"></div>
-    </div>
-    <!-- Rooms -->
-    <div class="admin-panel" id="oTab-rooms" style="display:none">
-      <div id="ownerRoomList" class="admin-user-list"></div>
-    </div>
-    <!-- Bans -->
-    <div class="admin-panel" id="oTab-bans" style="display:none">
-      <div class="input-group"><label>🌐 Global ban VOID ID</label><div class="row-gap"><input type="text" id="oGlobalBanInput" placeholder="VOID ID"/><button class="btn-primary admin-tool-btn--danger" id="oGlobalBanBtn">Ban</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>✅ Unban VOID ID</label><div class="row-gap"><input type="text" id="oGlobalUnbanInput" placeholder="VOID ID"/><button class="btn-primary" id="oGlobalUnbanBtn">Unban</button></div></div>
-      <div id="ownerBanList" style="margin-top:10px" class="admin-user-list"></div>
-    </div>
-    <!-- Settings -->
-    <div class="admin-panel" id="oTab-settings" style="display:none">
-      <div class="input-group"><label>📝 MOTD (shown on connect)</label><div class="row-gap"><input type="text" id="oMotdInput" placeholder="Message of the day…"/><button class="btn-primary" id="oMotdBtn">Set</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>📢 Server Announce (all users)</label><div class="row-gap"><input type="text" id="oAnnounceInput" placeholder="Global announcement…"/><button class="btn-primary" id="oAnnounceBtn">Announce</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>⭐ Promote to Server Owner (VOID ID)</label><div class="row-gap"><input type="text" id="oPromoteInput" placeholder="VOID ID"/><button class="btn-primary" id="oPromoteBtn">Promote</button></div></div>
-      <div class="input-group" style="margin-top:10px"><label>❌ Revoke Owner (VOID ID)</label><div class="row-gap"><input type="text" id="oRevokeInput" placeholder="VOID ID"/><button class="btn-secondary" id="oRevokeBtn">Revoke</button></div></div>
+        <!-- Owner Panel (server owner only) -->
+        <div class="admin-section" id="adminTab-owner" style="display:none">
+          <div class="owner-sub-tabs">
+            <button class="owner-sub-tab owner-sub-tab--active" data-osub="motd">MOTD</button>
+            <button class="owner-sub-tab" data-osub="announce">Announce</button>
+            <button class="owner-sub-tab" data-osub="bans">Bans</button>
+            <button class="owner-sub-tab" data-osub="stats">Stats</button>
+            <button class="owner-sub-tab" data-osub="filters">Filters</button>
+            <button class="owner-sub-tab" data-osub="settings">Settings</button>
+            <button class="owner-sub-tab" data-osub="audit">Owner Audit</button>
+            <button class="owner-sub-tab" data-osub="transfer">Transfer</button>
+          </div>
+
+          <!-- MOTD -->
+          <div class="owner-sub-section owner-sub-section--active" id="ownerSub-motd">
+            <div class="admin-card">
+              <label class="admin-card__label">📢 Message of the Day</label>
+              <textarea id="ownerMotdInput" rows="3" placeholder="Welcome message shown to all users on connect…" style="resize:vertical;width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px;color:var(--tx1);font-size:.85rem;outline:none"></textarea>
+              <button class="btn-primary" id="ownerMotdBtn" style="align-self:flex-start;margin-top:6px">Update MOTD</button>
+            </div>
+          </div>
+
+          <!-- Announce -->
+          <div class="owner-sub-section" id="ownerSub-announce">
+            <div class="admin-card">
+              <label class="admin-card__label">📣 Broadcast Message</label>
+              <textarea id="ownerAnnounceInput" rows="3" placeholder="Broadcast to all connected users…" style="resize:vertical;width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px;color:var(--tx1);font-size:.85rem;outline:none"></textarea>
+              <div style="margin-top:8px">
+                <label class="admin-card__label" style="margin-bottom:4px">Target</label>
+                <select id="ownerAnnounceTarget" style="width:100%;padding:6px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1)">
+                  <option value="all">All Rooms</option>
+                </select>
+              </div>
+              <label class="check-label" style="margin-top:8px"><input type="checkbox" id="ownerAnnouncePinned"/> Pin announcement</label>
+              <label class="check-label" style="margin-top:6px"><input type="checkbox" id="ownerAnnounceScheduled"/> Schedule</label>
+              <input type="datetime-local" id="ownerAnnounceTime" style="margin-top:4px;width:100%;padding:6px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1)"/>
+              <div class="row-gap" style="margin-top:8px">
+                <button class="btn-primary" id="ownerAnnounceBtn">Send Now</button>
+                <button class="btn-secondary" id="ownerScheduleBtn">Schedule</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bans -->
+          <div class="owner-sub-section" id="ownerSub-bans">
+            <div class="admin-card">
+              <label class="admin-card__label">🚫 Global Ban / Unban</label>
+              <div class="row-gap">
+                <input type="text" id="ownerBanInput" placeholder="VABCD123" maxlength="8" autocomplete="off" style="text-transform:uppercase;flex:1"/>
+                <input type="text" id="ownerBanReason" placeholder="Reason" style="flex:2"/>
+                <button class="btn-primary admin-tool-btn--danger" id="ownerGlobalBanBtn">Ban</button>
+                <button class="btn-secondary" id="ownerGlobalUnbanBtn">Unban</button>
+              </div>
+              <input type="text" id="ownerBanSearch" placeholder="Search bans…" style="margin-top:8px;width:100%;padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem"/>
+              <div id="ownerBanList" class="admin-user-list" style="margin-top:6px"></div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="owner-sub-section" id="ownerSub-stats">
+            <div class="admin-card">
+              <label class="admin-card__label">📊 Server Stats</label>
+              <div class="owner-stats" id="ownerStatsCards"></div>
+              <div id="ownerSparkline" style="margin:8px 0"></div>
+              <input type="text" id="ownerUserSearch" placeholder="Search users…" style="width:100%;padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem;margin-bottom:6px"/>
+              <div style="font-size:.75rem;color:var(--tx3);font-weight:700;margin-bottom:4px">Channels</div>
+              <div id="ownerRoomList"></div>
+              <div style="font-size:.75rem;color:var(--tx3);font-weight:700;margin:8px 0 4px">Online Users</div>
+              <div id="ownerUserList" class="admin-user-list"></div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="owner-sub-section" id="ownerSub-filters">
+            <div class="admin-card">
+              <label class="admin-card__label">🚫 Word Filters</label>
+              <p style="font-size:.78rem;color:var(--tx2);margin-bottom:8px">Server-wide — words replaced with █ in all channels.</p>
+              <div class="row-gap">
+                <input type="text" id="ownerFilterInput" placeholder="word to filter" style="flex:1"/>
+                <button class="btn-primary" id="ownerFilterAddBtn">Add</button>
+              </div>
+              <div id="ownerFilterChips" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+            </div>
+          </div>
+
+          <!-- Settings -->
+          <div class="owner-sub-section" id="ownerSub-settings">
+            <div class="admin-card">
+              <label class="admin-card__label">⚙ Server Settings</label>
+              <div class="input-group">
+                <label>Server Name</label>
+                <input type="text" id="cfgServerName" placeholder="VOID"/>
+              </div>
+              <div class="input-group" style="margin-top:8px">
+                <label>Max Users (0 = unlimited)</label>
+                <input type="number" id="cfgMaxUsers" min="0" placeholder="0" style="width:100px"/>
+              </div>
+              <div class="input-group" style="margin-top:8px">
+                <label>Default Channel</label>
+                <input type="text" id="cfgDefaultChannel" placeholder="general"/>
+              </div>
+              <div class="input-group" style="margin-top:8px">
+                <label>Welcome Message</label>
+                <input type="text" id="cfgWelcomeMsg" placeholder="Welcome to VOID…"/>
+              </div>
+              <label class="check-label" style="margin-top:8px"><input type="checkbox" id="cfgAllowGuestNames"/> Allow guest names</label>
+              <label class="check-label" style="margin-top:6px"><input type="checkbox" id="cfgRegistrationOpen" checked/> Registration open</label>
+              <label class="check-label" style="margin-top:6px"><input type="checkbox" id="cfgMaintenance"/> Maintenance mode</label>
+              <button class="btn-primary" id="ownerSaveConfigBtn" style="margin-top:10px;align-self:flex-start">Save Settings</button>
+            </div>
+          </div>
+
+          <!-- Owner Audit -->
+          <div class="owner-sub-section" id="ownerSub-audit">
+            <div class="admin-card">
+              <label class="admin-card__label">📋 Owner Audit Log</label>
+              <div class="row-gap" style="margin-bottom:8px">
+                <select id="ownerAuditFilter" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem">
+                  <option value="">All Events</option>
+                  <option value="globalBan">Bans</option>
+                  <option value="announce">Announces</option>
+                  <option value="maintenanceOn">Maintenance</option>
+                  <option value="transferOwnership">Transfers</option>
+                </select>
+                <input type="text" id="ownerAuditSearch" placeholder="Search…" style="flex:1;padding:5px 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--tx1);font-size:.8rem"/>
+                <button class="btn-secondary" id="ownerAuditRefreshBtn">🔄</button>
+              </div>
+              <div id="ownerAuditLog" class="audit-log" style="max-height:300px;overflow-y:auto"></div>
+            </div>
+          </div>
+
+          <!-- Transfer -->
+          <div class="owner-sub-section" id="ownerSub-transfer">
+            <div class="admin-card">
+              <label class="admin-card__label">🔁 Transfer Ownership</label>
+              <p style="font-size:.82rem;color:var(--tx2);margin-bottom:10px">Permanently transfers your owner status. <strong style="color:var(--red)">Cannot be undone.</strong></p>
+              <div class="row-gap">
+                <input type="text" id="ownerTransferInput" placeholder="VABCD123" maxlength="8" autocomplete="off" style="text-transform:uppercase;flex:1"/>
+                <button class="btn-primary admin-tool-btn--danger" id="ownerTransferBtn">Transfer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -492,6 +851,139 @@
     <div class="modal__actions"><button class="btn-secondary" id="cancelClaimOwner">Cancel</button><button class="btn-primary" id="submitClaimOwner">Claim</button></div>
   </div>
 </div>
+
+<!-- Add Friend -->
+<div class="modal-overlay" id="addFriendModal" style="display:none">
+  <div class="modal">
+    <div class="modal__hdr">
+      <h3>➕ Add Friend</h3>
+      <button class="btn-icon" id="closeAddFriendModal">✕</button>
+    </div>
+    <form id="addFriendForm">
+      <div class="input-group">
+        <label>VOID ID</label>
+        <input type="text" id="addFriendInput" placeholder="e.g. VABCD123" maxlength="8"
+          autocomplete="off" style="text-transform:uppercase" required />
+        <p class="void-id-hint">Ask your friend to share their VOID ID from Settings.</p>
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary" id="cancelAddFriend">Cancel</button>
+        <button type="submit" class="btn-primary">Send Request</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Create / Join Group -->
+<div class="modal-overlay" id="groupActionModal" style="display:none">
+  <div class="modal">
+    <div class="sheet-handle"></div>
+    <div class="modal__hdr">
+      <h3>Groups</h3>
+      <button class="btn-icon" id="closeGroupModal">✕</button>
+    </div>
+    <div class="admin-tabs" id="groupModalTabs">
+      <button class="admin-tab admin-tab--active" data-gtab="create">Create</button>
+      <button class="admin-tab" data-gtab="join">Join</button>
+    </div>
+    <!-- Create -->
+    <div id="groupTab-create" class="admin-panel">
+      <form id="createGroupForm">
+        <div class="input-group">
+          <label>Group Name</label>
+          <input type="text" id="groupNameInput" maxlength="30" placeholder="My group" required />
+        </div>
+        <div class="input-group">
+          <label>Description <span class="label-badge--optional">optional</span></label>
+          <input type="text" id="groupDescInput" maxlength="80" placeholder="What's this group about?" />
+        </div>
+        <div class="input-group">
+          <label>Password <span class="label-badge--optional">optional</span></label>
+          <input type="password" id="groupPasswordInput" placeholder="Leave blank for open group" />
+        </div>
+        <div class="input-group">
+          <label class="check-label">
+            <input type="checkbox" id="groupPrivateCheck" />
+            Private (invite-only)
+          </label>
+        </div>
+        <div class="modal__actions">
+          <button type="submit" class="btn-primary">Create Group</button>
+        </div>
+      </form>
+    </div>
+    <!-- Join -->
+    <div id="groupTab-join" class="admin-panel" style="display:none">
+      <form id="joinGroupForm">
+        <div class="input-group">
+          <label>Group ID</label>
+          <input type="text" id="joinGroupIdInput" placeholder="8-char group ID" maxlength="8"
+            autocomplete="off" style="text-transform:uppercase" required />
+        </div>
+        <div class="input-group">
+          <label>Password <span class="label-badge--optional">if required</span></label>
+          <input type="password" id="joinGroupPasswordInput" placeholder="Leave blank if open" />
+        </div>
+        <p class="join-error" id="joinGroupError" style="display:none"></p>
+        <div class="modal__actions">
+          <button type="submit" class="btn-primary">Join Group</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Create / Join Server -->
+<div class="modal-overlay" id="serverActionModal" style="display:none">
+  <div class="modal">
+    <div class="sheet-handle"></div>
+    <div class="modal__hdr">
+      <h3>Servers</h3>
+      <button class="btn-icon" id="closeServerModal">✕</button>
+    </div>
+    <div class="admin-tabs" id="serverModalTabs">
+      <button class="admin-tab admin-tab--active" data-stab="create">Create</button>
+      <button class="admin-tab" data-stab="join">Join</button>
+    </div>
+    <div id="serverTab-create" class="admin-panel">
+      <form id="createServerForm">
+        <div class="input-group">
+          <label>Server Name</label>
+          <input type="text" id="serverNameInput" maxlength="30" placeholder="My Server" required />
+        </div>
+        <div class="input-group">
+          <label>Description <span class="label-badge--optional">optional</span></label>
+          <input type="text" id="serverDescInput" maxlength="80" placeholder="What is this server about?" />
+        </div>
+        <div class="input-group">
+          <label>Password <span class="label-badge--optional">optional</span></label>
+          <input type="password" id="serverPasswordInput" placeholder="Leave blank for open" />
+        </div>
+        <div class="modal__actions">
+          <button type="submit" class="btn-primary">Create Server</button>
+        </div>
+      </form>
+    </div>
+    <div id="serverTab-join" class="admin-panel" style="display:none">
+      <form id="joinServerForm">
+        <div class="input-group">
+          <label>Server ID</label>
+          <input type="text" id="joinServerIdInput" placeholder="8-char server ID" maxlength="8"
+            autocomplete="off" style="text-transform:uppercase" required />
+        </div>
+        <div class="input-group">
+          <label>Password <span class="label-badge--optional">if required</span></label>
+          <input type="password" id="joinServerPasswordInput" placeholder="Leave blank if open" />
+        </div>
+        <p class="join-error" id="joinServerError" style="display:none"></p>
+        <div class="modal__actions">
+          <button type="submit" class="btn-primary">Join Server</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 
 <!-- ══════════════════════════════════════════════
      CALL UI
@@ -548,6 +1040,156 @@
   </div>
 </div>
 
+<!-- Context menu (injected by JS) -->
+
+<script src="crypto.js" defer></script>
+<script src="settings.js" defer></script>
+<script src="app.js" defer></script>
+<script src="feed.js" defer></script>
+<script src="friends.js" defer></script>
+<script src="dms.js" defer></script>
+<script src="voidflashes.js" defer></script>
+<script src="groups.js" defer></script>
+<script src="servers.js" defer></script>
+
+<!-- ══════════════════════════════════════════════
+     FEED OVERLAY
+══════════════════════════════════════════════ -->
+<div class="feed-overlay" id="feedOverlay" style="display:none">
+  <!-- Header -->
+  <div class="feed-header">
+    <span class="feed-title">◈ VOID Feed</span>
+    <button class="btn-icon feed-close" id="closeFeedBtn">✕</button>
+  </div>
+
+  <!-- VOID Rings row -->
+  <div class="void-rings" id="voidRings">
+    <div class="void-ring-wrap void-ring-wrap--static">
+      <button class="void-ring void-ring--add" id="postVoidBtn">
+        <span class="void-ring__av void-ring__av--add">＋</span>
+      </button>
+      <span class="void-ring__name">My VOID</span>
+    </div>
+    <div class="void-ring-wrap void-ring-wrap--static">
+      <button class="void-ring void-ring--flash-post" id="postFlashBtn">
+        <span class="void-ring__av void-ring__av--flash">⚡</span>
+      </button>
+      <span class="void-ring__name">FlashVoid</span>
+    </div>
+  </div>
+
+  <!-- Masonry feed grid -->
+  <div class="feed-grid" id="feedGrid">
+    <p class="feed-empty" id="feedEmpty" style="display:none">No activity yet — start chatting!</p>
+  </div>
+
+  <!-- VOID Viewer (full-screen over feed) -->
+  <div class="void-viewer" id="voidViewer" style="display:none">
+    <div class="void-viewer__bar-wrap"><div class="void-viewer__bar" id="voidViewerBar"></div></div>
+    <button class="void-viewer__close btn-icon" id="closeVoidViewer">✕</button>
+    <div class="void-viewer__body" id="voidViewerBody"></div>
+  </div>
+
+  <!-- Flash Viewer (full-screen over feed, for FlashVoids) -->
+  <div class="void-viewer void-viewer--flash" id="flashViewer" style="display:none">
+    <div class="void-viewer__bar-wrap"><div class="void-viewer__bar" id="flashViewerBar"></div></div>
+    <button class="void-viewer__close btn-icon" id="closeFlashViewer">✕</button>
+    <div class="void-viewer__body" id="flashViewerBody"></div>
+    <div class="vf-burning" id="flashViewerBurning" style="display:none">🔥 Burning…</div>
+    <div class="flash-viewer__e2e">⚡ FlashVoid · deletes after view</div>
+  </div>
+
+  <!-- VOID Composer (bottom sheet) -->
+  <div class="void-composer" id="voidComposer" style="display:none">
+    <div class="sheet-handle"></div>
+    <h4 class="void-composer__title">Post a VOID</h4>
+    <div class="composer-media-preview" id="voidMediaPreview" style="display:none">
+      <img id="voidMediaImg" src="" alt="" class="composer-media-img">
+      <button class="btn-icon composer-media-remove" id="voidMediaRemove">✕</button>
+    </div>
+    <textarea class="void-composer__input" id="voidComposerInput"
+      maxlength="280" placeholder="What's your VOID today?"></textarea>
+    <div class="void-composer__expiry" id="voidExpiryOpts">
+      <button class="seg-btn seg-btn--active" data-expiry="3600000">1h</button>
+      <button class="seg-btn" data-expiry="21600000">6h</button>
+      <button class="seg-btn" data-expiry="86400000">24h</button>
+    </div>
+    <div class="modal__actions">
+      <button class="btn-icon" id="voidMediaBtn" title="Add image">🖼</button>
+      <input type="file" id="voidMediaPicker" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none">
+      <button class="btn-secondary" id="cancelVoidComposer">Cancel</button>
+      <button class="btn-primary"   id="submitVoidComposer">Post VOID</button>
+    </div>
+  </div>
+
+  <!-- FlashVoid Composer (bottom sheet) -->
+  <div class="void-composer" id="flashComposer" style="display:none">
+    <div class="sheet-handle"></div>
+    <h4 class="void-composer__title">⚡ FlashVoid</h4>
+    <div class="composer-media-preview" id="flashMediaPreview" style="display:none">
+      <img id="flashMediaImg" src="" alt="" class="composer-media-img">
+      <button class="btn-icon composer-media-remove" id="flashMediaRemove">✕</button>
+    </div>
+    <textarea class="void-composer__input" id="flashComposerInput"
+      maxlength="280" placeholder="Caption… (optional)"></textarea>
+    <div class="flash-timer-row" id="flashTimerOpts">
+      <span class="vf-bar__label" style="font-size:.68rem">Burns:</span>
+      <button class="vf-timer vf-timer--active" data-fms="0">👁 Once</button>
+      <button class="vf-timer" data-fms="3000">3s</button>
+      <button class="vf-timer" data-fms="5000">5s</button>
+      <button class="vf-timer" data-fms="10000">10s</button>
+      <button class="vf-timer" data-fms="30000">30s</button>
+    </div>
+    <div class="modal__actions">
+      <button class="btn-icon" id="flashMediaBtn" title="Add image">🖼</button>
+      <input type="file" id="flashMediaPicker" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none">
+      <button class="btn-secondary" id="cancelFlashComposer">Cancel</button>
+      <button class="btn-primary" id="submitFlashComposer">Flash It ⚡</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── PWA Service Worker registration ──────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(r => console.log('[SW] registered:', r.scope))
+        .catch(e => console.warn('[SW] registration failed:', e))
+    })
+  }
+</script>
+<!-- NSFW Gate overlay -->
+<div class="nsfw-gate" id="nsfwGate" style="display:none">
+  <div class="nsfw-gate__box">
+    <div class="nsfw-gate__icon">🔞</div>
+    <h3 class="nsfw-gate__title">Age-Restricted Channel</h3>
+    <p class="nsfw-gate__desc">
+      <strong id="nsfwGateRoom">#channel</strong> contains adult content.<br>
+      You must be 18+ to view this channel.
+    </p>
+    <div class="modal__actions" style="justify-content:center;gap:12px">
+      <button class="btn-secondary" onclick="window.denyNsfw()">Leave</button>
+      <button class="btn-primary" onclick="window.confirmNsfw()">I am 18+ — Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Camera capture modal -->
+<div class="modal-overlay" id="cameraModal" style="display:none">
+  <div class="modal modal--camera">
+    <video id="cameraPreview" autoplay playsinline muted></video>
+    <canvas id="cameraCanvas" style="display:none"></canvas>
+    <div class="camera-controls">
+      <button class="cam-flip-btn" id="camFlipBtn" title="Flip camera">🔄</button>
+      <button class="shutter-btn"  id="camShutterBtn" title="Capture"></button>
+      <button class="cam-close-btn" id="camCloseBtn" title="Close">✕</button>
+    </div>
+  </div>
+</div>
+<div id="lightboxOverlay" onclick="this.classList.remove('open')">
+  <img id="lightboxImg" src="" alt=""/>
+</div>
 </body>
 
 </html>
