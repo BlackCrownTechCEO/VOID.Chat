@@ -349,6 +349,7 @@ function richUsers(room){
 //  SOCKET.IO
 // ═══════════════════════════════════════════════════════
 const io = new Server(srv, {
+    maxHttpBufferSize: 8e6,  // 8 MB — covers 5 MB file after base64 expansion (~6.7 MB)
     cors:{ origin: process.env.NODE_ENV==='production'?false:['http://localhost:5500','http://127.0.0.1:5500'] }
 })
 

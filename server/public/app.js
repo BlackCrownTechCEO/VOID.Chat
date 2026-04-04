@@ -411,7 +411,7 @@ document.addEventListener('click', e => {
 // ═══════════════════════════════════════════════════════
 function sendMsg() {
     const text = msgInput.value.trim()
-    if (!text || !myName || !myRoom) return
+    if ((!text && !_pendingAttachment) || !myName || !myRoom) return
 
     // Slash command
     if (text.startsWith('/')) {
@@ -590,6 +590,7 @@ $('attachBtn').addEventListener('click', e => {
     attachMenu.style.display = attachMenu.style.display === 'none' ? 'flex' : 'none'
 })
 document.addEventListener('click', e => {
+    if (attachMenu.style.display === 'none') return
     if (!attachMenu.contains(e.target) && e.target.id !== 'attachBtn')
         attachMenu.style.display = 'none'
 })
@@ -614,6 +615,7 @@ function readFileAsAttachment(file) {
         _pendingAttachment = { name: file.name, mimeType: file.type || 'application/octet-stream', dataUrl: ev.target.result }
         showAttachChip()
     }
+    reader.onerror = () => showToast('Could not read file', 'error')
     reader.readAsDataURL(file)
 }
 
@@ -681,6 +683,9 @@ window.openLightbox = function(src) {
     $('lightboxImg').src = src
     $('lightboxOverlay').classList.add('open')
 }
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') $('lightboxOverlay').classList.remove('open')
+})
 
 // ── Toggle users ──────────────────────────────────────
 $('toggleUsersBtn').addEventListener('click', () => $('usersPanel').classList.toggle('users-panel--hidden'))
