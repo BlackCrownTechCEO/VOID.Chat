@@ -309,10 +309,42 @@
           <button class="btn-icon" id="cancelReply">✕</button>
         </div>
         <div class="slow-bar" id="slowBar" style="display:none"><span id="slowCountdown">⏳ 5s</span></div>
-        <div class="input-row">
-          <button class="btn-icon" id="attachBtn"  title="Attach image URL">📎</button>
-          <input  type="text"      id="msgInput"   placeholder="Message…" autocomplete="off"/>
-          <button class="btn-icon" id="emojiBtn"   title="Emoji">😊</button>
+        <div id="attachChip" class="attach-chip" style="display:none">
+          <span id="attachChipName"></span>
+          <span class="attach-chip__remove" id="attachChipRemove">✕</span>
+        </div>
+        <div id="vfBar" style="display:none">
+          <span style="font-size:1rem">⚡</span>
+          <span class="vf-bar__label">VOIDFLASH</span>
+          <button class="vf-timer vf-timer--active" data-ms="0">👁 Once</button>
+          <button class="vf-timer" data-ms="3000">3s</button>
+          <button class="vf-timer" data-ms="5000">5s</button>
+          <button class="vf-timer" data-ms="10000">10s</button>
+          <button class="vf-timer" data-ms="30000">30s</button>
+        </div>
+        <div class="input-row" style="position:relative">
+          <div class="attach-wrap">
+            <button class="btn-icon" id="attachBtn" title="Attach file">📎</button>
+            <div class="attach-menu" id="attachMenu" style="display:none">
+              <div class="attach-opt" id="attachImageOpt">
+                <span class="attach-opt__icon">🖼</span>Image
+                <div style="font-size:.65rem;color:var(--tx3)">png jpg gif webp</div>
+              </div>
+              <div class="attach-opt" id="attachFileOpt">
+                <span class="attach-opt__icon">📄</span>File
+                <div style="font-size:.65rem;color:var(--tx3)">any type</div>
+              </div>
+              <div class="attach-opt attach-opt--cam" id="attachCamOpt">
+                <span class="attach-opt__icon">📷</span>Camera
+                <div style="font-size:.65rem;color:#7b2fff88">live</div>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="filePickerImage" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none"/>
+          <input type="file" id="filePickerAny"   style="display:none"/>
+          <input  type="text" id="msgInput" placeholder="Message…" autocomplete="off"/>
+          <button class="btn-icon" id="vfToggleBtn" title="VoidFlash">⚡</button>
+          <button class="btn-icon" id="emojiBtn"    title="Emoji">😊</button>
           <button class="send-btn" id="sendBtn">Send</button>
         </div>
         <div class="emoji-picker" id="emojiPicker" style="display:none"></div>
@@ -1079,6 +1111,21 @@
     })
   }
 </script>
+<!-- Camera capture modal -->
+<div class="modal-overlay" id="cameraModal" style="display:none">
+  <div class="modal modal--camera">
+    <video id="cameraPreview" autoplay playsinline muted></video>
+    <canvas id="cameraCanvas" style="display:none"></canvas>
+    <div class="camera-controls">
+      <button class="cam-flip-btn" id="camFlipBtn" title="Flip camera">🔄</button>
+      <button class="shutter-btn"  id="camShutterBtn" title="Capture"></button>
+      <button class="cam-close-btn" id="camCloseBtn" title="Close">✕</button>
+    </div>
+  </div>
+</div>
+<div id="lightboxOverlay" onclick="this.classList.remove('open')">
+  <img id="lightboxImg" src="" alt=""/>
+</div>
 </body>
 
 </html>

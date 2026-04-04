@@ -277,6 +277,17 @@ function formatText(raw) {
 // ═══════════════════════════════════════════════════════
 //  MESSAGE RENDERING
 // ═══════════════════════════════════════════════════════
+function buildAttachHtml(attach) {
+    if (!attach?.dataUrl) return ''
+    if (attach.mimeType?.startsWith('image/')) {
+        return `<img src="${escHtml(attach.dataUrl)}" class="msg-image msg-image--upload"
+          alt="${escHtml(attach.name)}" loading="lazy"
+          onclick="openLightbox(${JSON.stringify(attach.dataUrl)})">`
+    }
+    return `<a class="msg-file-link" href="${escHtml(attach.dataUrl)}"
+      download="${escHtml(attach.name)}">${escHtml(attach.name)}</a>`
+}
+
 function buildMsgEl(data) {
     const { id, name, text, time, type, replyTo, reactions } = data
     const isMine = name === myName
@@ -324,7 +335,8 @@ function buildMsgEl(data) {
           ${data.e2eWarn ? '<span class="msg__e2e msg__e2e--warn" title="Unencrypted">⚠</span>' : ''}
           ${isMine ? `<span class="msg__status" id="st-${id}">✓</span>` : ''}
         </div>
-        <div class="msg__text">${formatText(text)}</div>
+        <div class="msg__text">${formatText(text || '')}</div>
+        ${data.attach ? buildAttachHtml(data.attach) : ''}
         <div class="msg__reactions" id="rx-${id}">${rxHtml}</div>
       </div>
       <div class="msg__actions">
@@ -416,7 +428,9 @@ function sendMsg() {
         }
     }
 
-    socket.emit('message', { name: myName, text, replyTo: replyingTo })
+    const payload = { name: myName, text, replyTo: replyingTo }
+    if (_pendingAttachment) { payload.attach = _pendingAttachment; clearAttachment() }
+    socket.emit('message', payload)
     lastSentMs = Date.now()
     msgInput.value = ''
     clearReply()
@@ -564,11 +578,109 @@ function clearSearch() {
     chatDisplay.querySelectorAll('.msg').forEach(el => { el.style.opacity = '1'; el.classList.remove('msg--highlight') })
 }
 
-// ── Attach ────────────────────────────────────────────
-$('attachBtn').addEventListener('click', () => {
-    const url = prompt('Paste an image URL:')
-    if (url?.trim()) { msgInput.value += (msgInput.value ? ' ' : '') + url.trim(); msgInput.focus() }
+// ── Attach menu ───────────────────────────────────────
+let _pendingAttachment = null
+const attachMenu   = $('attachMenu')
+const filePickerImg = $('filePickerImage')
+const filePickerAny = $('filePickerAny')
+const MAX_ATTACH_BYTES = 7_340_032  // 5 MB base64 limit
+
+$('attachBtn').addEventListener('click', e => {
+    e.stopPropagation()
+    attachMenu.style.display = attachMenu.style.display === 'none' ? 'flex' : 'none'
 })
+document.addEventListener('click', e => {
+    if (!attachMenu.contains(e.target) && e.target.id !== 'attachBtn')
+        attachMenu.style.display = 'none'
+})
+
+$('attachImageOpt').addEventListener('click', () => {
+    attachMenu.style.display = 'none'
+    filePickerImg.click()
+})
+$('attachFileOpt').addEventListener('click', () => {
+    attachMenu.style.display = 'none'
+    filePickerAny.click()
+})
+$('attachCamOpt').addEventListener('click', () => {
+    attachMenu.style.display = 'none'
+    openCamera()
+})
+
+function readFileAsAttachment(file) {
+    if (file.size > MAX_ATTACH_BYTES) { showToast('File too large — max 5 MB', 'error'); return }
+    const reader = new FileReader()
+    reader.onload = ev => {
+        _pendingAttachment = { name: file.name, mimeType: file.type || 'application/octet-stream', dataUrl: ev.target.result }
+        showAttachChip()
+    }
+    reader.readAsDataURL(file)
+}
+
+filePickerImg.addEventListener('change', () => { if (filePickerImg.files[0]) readFileAsAttachment(filePickerImg.files[0]); filePickerImg.value = '' })
+filePickerAny.addEventListener('change', () => { if (filePickerAny.files[0]) readFileAsAttachment(filePickerAny.files[0]); filePickerAny.value = '' })
+
+function showAttachChip() {
+    const chip = $('attachChip')
+    $('attachChipName').textContent = _pendingAttachment.name
+    chip.style.display = 'flex'
+}
+function clearAttachment() {
+    _pendingAttachment = null
+    $('attachChip').style.display = 'none'
+    $('attachChipName').textContent = ''
+}
+$('attachChipRemove').addEventListener('click', clearAttachment)
+
+// ── Camera capture ────────────────────────────────────
+let _camStream   = null
+let _facingMode  = 'user'
+
+async function openCamera() {
+    $('cameraModal').style.display = 'flex'
+    await startCamStream()
+}
+
+async function startCamStream() {
+    if (_camStream) _camStream.getTracks().forEach(t => t.stop())
+    try {
+        _camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: _facingMode }, audio: false })
+        $('cameraPreview').srcObject = _camStream
+    } catch (_) {
+        closeCamera()
+        filePickerImg.click()
+    }
+}
+
+function captureFrame() {
+    const video  = $('cameraPreview')
+    const canvas = $('cameraCanvas')
+    canvas.width  = video.videoWidth  || 640
+    canvas.height = video.videoHeight || 480
+    canvas.getContext('2d').drawImage(video, 0, 0)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+    closeCamera()
+    _pendingAttachment = { name: 'camera.jpg', mimeType: 'image/jpeg', dataUrl }
+    showAttachChip()
+}
+
+function closeCamera() {
+    if (_camStream) { _camStream.getTracks().forEach(t => t.stop()); _camStream = null }
+    $('cameraModal').style.display = 'none'
+}
+
+$('camShutterBtn').addEventListener('click', captureFrame)
+$('camCloseBtn').addEventListener('click', closeCamera)
+$('camFlipBtn').addEventListener('click', () => {
+    _facingMode = _facingMode === 'user' ? 'environment' : 'user'
+    startCamStream()
+})
+
+// ── Lightbox ──────────────────────────────────────────
+window.openLightbox = function(src) {
+    $('lightboxImg').src = src
+    $('lightboxOverlay').classList.add('open')
+}
 
 // ── Toggle users ──────────────────────────────────────
 $('toggleUsersBtn').addEventListener('click', () => $('usersPanel').classList.toggle('users-panel--hidden'))
@@ -1180,6 +1292,11 @@ window.startCall = startCall
 window.socket      = socket
 window.openAdminPanel = openAdminPanel
 window.showToast   = showToast
+window.clearAttachment = clearAttachment
+Object.defineProperty(window, '_pendingAttachment', {
+    get: () => _pendingAttachment,
+    set: v => { _pendingAttachment = v }
+})
 window.avatarColor = avatarColor
 window.initials    = initials
 window.escHtml     = escHtml
