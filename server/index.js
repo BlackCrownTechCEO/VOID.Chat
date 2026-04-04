@@ -710,8 +710,8 @@ io.on('connection', socket => {
     // ── VoidFlash opened (delete from history for both sides) ──
     socket.on('voidFlashOpened',({msgId,isDm,withVoidId})=>{
         if(isDm){
-            const vid=socket.data?.voidId; if(!vid) return
-            DMs.delMsg(vid,withVoidId||'',msgId)
+            const vid=socket.data?.voidId; if(!vid||!withVoidId) return
+            DMs.delMsg(vid,withVoidId,msgId)
             const toSid=VoidSockets.sid(withVoidId||'')
             if(toSid) io.to(toSid).emit('deleteMsg',{msgId})
         } else {
@@ -723,6 +723,7 @@ io.on('connection', socket => {
 
     // ── VoidFlash screenshot alert ────────────────────────────
     socket.on('vfScreenshot',({msgId,isDm,senderVoidId})=>{
+        if(!socket.data?.voidId) return
         const screenshotterName = socket.data?.name || Users.get(socket.id)?.name || 'Someone'
         const senderSid=VoidSockets.sid(senderVoidId||'')
         if(senderSid) io.to(senderSid).emit('vfScreenshotAlert',{byName:screenshotterName,msgId})
