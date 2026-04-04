@@ -1309,6 +1309,7 @@ Object.defineProperty(window, '_pendingAttachment', {
     get: () => _pendingAttachment,
     set: v => { _pendingAttachment = v }
 })
+Object.defineProperty(window, 'myRoom', { get: () => myRoom })
 window.avatarColor = avatarColor
 window.initials    = initials
 window.escHtml     = escHtml
