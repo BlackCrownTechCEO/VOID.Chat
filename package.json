@@ -1,0 +1,74 @@
+{
+  "name": "void-app",
+  "version": "7.0.0",
+  "description": "VOID by BlackCrownTech — Private Anonymous Messaging",
+  "main": "electron/main.js",
+  "scripts": {
+    "server":           "cd server && node .",
+    "electron":         "electron .",
+    "electron:dev":     "cross-env NODE_ENV=development electron .",
+    "electron:build":   "electron-builder",
+    "electron:win":     "electron-builder --win",
+    "electron:mac":     "electron-builder --mac",
+    "electron:linux":   "electron-builder --linux",
+    "cap:init":         "cap init VOID com.blackcrowntech.void --web-dir server/public",
+    "cap:sync":         "cap sync",
+    "cap:ios":          "cap open ios",
+    "cap:android":      "cap open android",
+    "cap:run:android":  "cap run android",
+    "cap:run:ios":      "cap run ios"
+  },
+  "devDependencies": {
+    "cross-env":        "^7.0.3",
+    "electron":         "^28.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^5.0.0",
+    "@capacitor/cli":     "^5.0.0",
+    "@capacitor/core":    "^5.0.0",
+    "@capacitor/ios":     "^5.0.0"
+  },
+  "build": {
+    "appId":       "com.blackcrowntech.void",
+    "productName": "VOID",
+    "copyright":   "© 2026 BlackCrownTech",
+    "directories": {
+      "output": "dist/electron"
+    },
+    "files": [
+      "electron/**/*",
+      "server/**/*",
+      "assets/**/*",
+      "!server/node_modules/.cache"
+    ],
+    "extraResources": [
+      { "from": "server", "to": "server", "filter": ["**/*", "!node_modules/.cache"] }
+    ],
+    "win": {
+      "target":          [{ "target": "nsis", "arch": ["x64"] }],
+      "icon":            "assets/icon.ico",
+      "publisherName":   "BlackCrownTech",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick":        false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon":   "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target":          [{ "target": "dmg", "arch": ["x64", "arm64"] }],
+      "icon":            "assets/icon.icns",
+      "category":        "public.app-category.social-networking",
+      "hardenedRuntime": true
+    },
+    "linux": {
+      "target":          [{ "target": "AppImage", "arch": ["x64"] }],
+      "icon":            "assets/icon.png",
+      "category":        "Network"
+    }
+  }
+}
