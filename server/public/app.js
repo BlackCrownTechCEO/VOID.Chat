@@ -583,7 +583,7 @@ let _pendingAttachment = null
 const attachMenu   = $('attachMenu')
 const filePickerImg = $('filePickerImage')
 const filePickerAny = $('filePickerAny')
-const MAX_ATTACH_BYTES = 7_340_032  // 5 MB base64 limit
+const MAX_ATTACH_BYTES = 5_242_880  // 5 MB
 
 $('attachBtn').addEventListener('click', e => {
     e.stopPropagation()
