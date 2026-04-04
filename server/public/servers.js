@@ -277,12 +277,14 @@ let ownerAuditCache = []
 let currentMaintenance = false
 
 // ── Open / close ──────────────────────────────────────────
-// ── Owner Panel — now lives inside Admin Panel as a tab ───
+// ── Owner Panel — lives inside Admin Panel as the ⭐ Owner tab ──
 function openOwnerTab() {
     const adminModal = document.getElementById('adminModal')
     if (adminModal.style.display === 'none') {
-        if (window.openAdminPanel) window.openAdminPanel()
-        else adminModal.style.display = 'flex'
+        // Show the modal directly without flashing the Users tab first
+        const roomNameEl = document.getElementById('adminRoomName')
+        if (roomNameEl) roomNameEl.textContent = window.myRoom || ''
+        adminModal.style.display = 'flex'
     }
     document.querySelectorAll('#adminModal .admin-nav-item').forEach(i => i.classList.remove('admin-nav-item--active'))
     document.querySelectorAll('#adminModal .admin-section').forEach(s => s.style.display = 'none')
@@ -294,6 +296,12 @@ function openOwnerTab() {
 }
 
 document.getElementById('ownerPanelBtn').addEventListener('click', openOwnerTab)
+
+// Also emit stats when the ⭐ Owner nav item is clicked directly inside the admin panel
+// (the generic admin tab handler handles the tab switch; this adds the data fetch)
+document.getElementById('ownerNavItem')?.addEventListener('click', () => {
+    window.socket.emit('ownerCmd', { cmd: 'getStats' })
+})
 
 // ── Owner sub-tab switching ───────────────────────────────
 document.querySelectorAll('.owner-sub-tab').forEach(tab => {

@@ -45,7 +45,9 @@ function makeThumb(dataUrl) {
 
 function buildVfContent(text, attach, vfExpiry) {
     const imgHtml = attach?.mimeType?.startsWith('image/')
-        ? `<img src="${window.escHtml(attach.dataUrl)}" class="vf-image" onclick="window.openLightbox(${JSON.stringify(attach.dataUrl)})">`
+        ? `<img src="${window.escHtml(attach.dataUrl)}" class="vf-image"
+            data-src="${window.escHtml(attach.dataUrl)}"
+            onclick="window.openLightbox(this.dataset.src)">`
         : (attach ? `<a class="msg-file-link" href="${window.escHtml(attach.dataUrl)}" download="${window.escHtml(attach.name)}">${window.escHtml(attach.name)}</a>` : '')
     const textHtml  = text ? `<div class="vf-text">${window.escHtml(text)}</div>` : ''
     const timerHtml = vfExpiry > 0

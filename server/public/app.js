@@ -280,9 +280,11 @@ function formatText(raw) {
 function buildAttachHtml(attach) {
     if (!attach?.dataUrl) return ''
     if (attach.mimeType?.startsWith('image/')) {
+        // data-src avoids JSON.stringify double-quotes breaking the onclick attribute
         return `<img src="${escHtml(attach.dataUrl)}" class="msg-image msg-image--upload"
           alt="${escHtml(attach.name)}" loading="lazy"
-          onclick="openLightbox(${JSON.stringify(attach.dataUrl)})">`
+          data-src="${escHtml(attach.dataUrl)}"
+          onclick="openLightbox(this.dataset.src)">`
     }
     return `<a class="msg-file-link" href="${escHtml(attach.dataUrl)}"
       download="${escHtml(attach.name)}">${escHtml(attach.name)}</a>`
