@@ -2,7 +2,7 @@
 //  sw.js — VOID Service Worker  ·  PWA offline shell
 // ═══════════════════════════════════════════════════════
 
-const CACHE  = 'void-v10'
+const CACHE  = 'void-v11'
 const STATIC = [
     '/',
     '/style.css',
