@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: void-api
+  namespace: void
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: void-api
+  template:
+    metadata:
+      labels:
+        app: void-api
+    spec:
+      containers:
+        - name: void-api
+          image: ghcr.io/your-org/void:latest
+          ports:
+            - containerPort: 3500
+          envFrom:
+            - secretRef:
+                name: void-secrets
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3500
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3500
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
