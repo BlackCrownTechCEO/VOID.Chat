@@ -1,6 +1,6 @@
-# VØID Production-Ready Build Pack
+# VOID.Chat
 
-This pack is a production deployment starter for VØID.
+VØID is a Chat App — production-ready build pack.
 
 ## Included
 - Dockerfile
