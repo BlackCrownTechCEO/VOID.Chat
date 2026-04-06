@@ -9,6 +9,7 @@
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/[...path].mjs" },
     { "src": "/healthz", "dest": "/index.js" },
+    { "src": "/readyz",  "dest": "/index.js" },
     { "src": "/(.*)", "dest": "/index.js" }
   ]
 }
