@@ -1,157 +1,106 @@
-import { useEffect, useMemo, useState } from "react";
-import { io } from "socket.io-client";
-import MessageBubble from "./components/MessageBubble.jsx";
-import { APP_NAME, buildAlias } from "@void/shared";
-import { createEncryptedOutgoing, decryptIncoming, registerBundle } from "./crypto/protocol.js";
+import { useMemo, useState } from "react";
+import "./styles/luxury.css";
+import LuxSidebar from "./components/LuxSidebar.jsx";
+import LuxHeader from "./components/LuxHeader.jsx";
+import LuxMessages from "./components/LuxMessages.jsx";
+import LuxComposer from "./components/LuxComposer.jsx";
 
-// Empty string = same origin (works on Vercel). Set VITE_API_URL for a separate backend host.
-const API_URL = import.meta.env.VITE_API_URL || "";
+/**
+ * Replace this temporary alias helper with your project's real alias helper if needed.
+ */
+function buildAlias(seed = "void") {
+  const words = ["ghost", "echo", "shadow", "cipher", "nova", "void"];
+  const a = words[seed.length % words.length];
+  const b = words[(seed.charCodeAt(0) || 0) % words.length];
+  return `@${a}-${b}-${seed.slice(0, 4)}`;
+}
 
 export default function App() {
-  const [alias] = useState(() => buildAlias(Math.random().toString(36).slice(2, 8)));
+  const [me] = useState(() => buildAlias(Math.random().toString(36).slice(2, 8)));
   const [peerAlias, setPeerAlias] = useState("");
-  const [socket, setSocket] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [status, setStatus] = useState("Luxury channel ready");
   const [text, setText] = useState("");
-  const [status, setStatus] = useState("Initializing…");
-
-  useEffect(() => {
-    registerBundle(API_URL, alias)
-      .then(() => setStatus("Identity ready"))
-      .catch((err) => setStatus(`Bundle registration failed: ${err.message}`));
-
-    const s = io(API_URL);
-    s.emit("join-alias", alias);
-    s.on("encrypted-message", async (entry) => {
-      try {
-        const plaintext = await decryptIncoming(entry.fromAlias, {
-          ...entry.payload,
-          senderBundle: entry.payload.senderBundle
-        });
-        setMessages((prev) => [...prev, {
-          id: entry.id,
-          sender: entry.fromAlias,
-          text: plaintext,
-          fromMe: false
-        }]);
-      } catch (err) {
-        setMessages((prev) => [...prev, {
-          id: entry.id,
-          sender: entry.fromAlias,
-          text: `[decrypt failed: ${err.message}]`,
-          fromMe: false
-        }]);
-      }
-    });
-    setSocket(s);
-    return () => s.close();
-  }, [alias]);
-
-  const send = async () => {
-    if (!peerAlias.trim() || !text.trim()) return;
-
-    try {
-      setStatus("Encrypting…");
-      const payload = await createEncryptedOutgoing(API_URL, alias, peerAlias.trim(), text.trim());
-      payload.senderBundle = (await (await fetch(`${API_URL}/api/keys/${encodeURIComponent(alias)}`)).json()).bundle;
-
-      const res = await fetch(`${API_URL}/api/encrypted/direct`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fromAlias: alias,
-          toAlias: peerAlias.trim(),
-          payload
-        })
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: "Send failed" }));
-        throw new Error(data.error || "Send failed");
-      }
-
-      setMessages((prev) => [...prev, {
-        id: crypto.randomUUID(),
-        sender: alias,
-        text: text.trim(),
-        fromMe: true
-      }]);
-      setText("");
-      setStatus("Encrypted send complete");
-    } catch (err) {
-      setStatus(err.message);
+  const [messages, setMessages] = useState([
+    {
+      id: "seed-1",
+      sender: "@cipher-nova-demo",
+      text: "Welcome back to VØID. This interface is designed to feel calmer, richer, and more premium than the older layout.",
+      fromMe: false,
+      meta: "Preview message"
     }
+  ]);
+
+  const contacts = useMemo(() => {
+    const items = [
+      { id: "c1", name: "@cipher-nova-demo", meta: "Verified secure contact" }
+    ];
+
+    if (peerAlias.trim()) {
+      items.unshift({
+        id: "typed-peer",
+        name: peerAlias.trim(),
+        meta: "Direct encrypted peer"
+      });
+    }
+
+    return items;
+  }, [peerAlias]);
+
+  const currentContact = contacts[0];
+
+  const handleSelectContact = (contact) => {
+    setPeerAlias(contact.name);
+    setStatus(`Selected ${contact.name}`);
+  };
+
+  const handleSend = async () => {
+    if (!peerAlias.trim() || !text.trim()) {
+      setStatus("Enter a peer alias and message first");
+      return;
+    }
+
+    /**
+     * Replace this block with your existing encrypted transport call, for example:
+     * await sendEncryptedMessage({ toAlias: peerAlias.trim(), text: text.trim() })
+     */
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        sender: me,
+        text: text.trim(),
+        fromMe: true,
+        meta: "Sent"
+      }
+    ]);
+    setText("");
+    setStatus(`Sent to ${peerAlias.trim()}`);
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", height: "100vh" }}>
-      <aside style={{ padding: 20, borderRight: "1px solid #222", background: "#0f0f14" }}>
-        <h1 style={{ marginTop: 0 }}>{APP_NAME}</h1>
-        <div style={{ marginBottom: 10, opacity: 0.8 }}>Your alias</div>
-        <div style={{ padding: 12, background: "#121218", borderRadius: 16 }}>{alias}</div>
-
-        <div style={{ marginTop: 20, marginBottom: 10, opacity: 0.8 }}>Peer alias</div>
-        <input
-          value={peerAlias}
-          onChange={(e) => setPeerAlias(e.target.value)}
-          placeholder="@peer-alias"
-          style={{
-            width: "100%",
-            padding: "12px 14px",
-            borderRadius: 14,
-            border: "1px solid #333",
-            background: "#121218",
-            color: "white"
-          }}
+    <div className="lux-shell">
+      <div className="lux-app">
+        <LuxSidebar
+          me={me}
+          peerAlias={peerAlias}
+          setPeerAlias={setPeerAlias}
+          contacts={contacts}
+          currentContact={currentContact}
+          onSelectContact={handleSelectContact}
         />
 
-        <div style={{ marginTop: 20, padding: 12, background: "#121218", borderRadius: 16, fontSize: 14 }}>
-          <div style={{ fontWeight: 700, marginBottom: 8 }}>Protocol status</div>
-          <div>{status}</div>
-        </div>
-      </aside>
-
-      <main style={{ display: "flex", flexDirection: "column" }}>
-        <header style={{ padding: 20, borderBottom: "1px solid #222", fontWeight: 700 }}>
-          Encrypted direct message
-        </header>
-
-        <section style={{ flex: 1, overflowY: "auto", padding: 20 }}>
-          {messages.map((item) => (
-            <MessageBubble key={item.id} item={item} />
-          ))}
-        </section>
-
-        <footer style={{ padding: 16, borderTop: "1px solid #222", display: "flex", gap: 12 }}>
-          <input
+        <main className="lux-main">
+          <LuxHeader currentContact={currentContact} />
+          <LuxMessages messages={messages} />
+          <LuxComposer
             value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="Type an encrypted message"
-            style={{
-              flex: 1,
-              padding: "14px 16px",
-              borderRadius: 14,
-              border: "1px solid #333",
-              background: "#121218",
-              color: "white"
-            }}
+            onChange={setText}
+            onSend={handleSend}
+            disabled={!peerAlias.trim()}
+            status={status}
           />
-          <button
-            onClick={send}
-            style={{
-              padding: "14px 18px",
-              borderRadius: 14,
-              border: 0,
-              background: "#2563eb",
-              color: "white",
-              fontWeight: 700
-            }}
-          >
-            Encrypt + Send
-          </button>
-        </footer>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
