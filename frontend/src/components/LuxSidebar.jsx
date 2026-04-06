@@ -11,13 +11,18 @@ function ContactItem({ item, active, onSelect }) {
   );
 }
 
+import LuxAdminPanel from "./LuxAdminPanel.jsx";
+
 export default function LuxSidebar({
   me,
   peerAlias,
   setPeerAlias,
   contacts,
   currentContact,
-  onSelectContact
+  onSelectContact,
+  onBroadcast,
+  onClearMessages,
+  connectedAliases
 }) {
   return (
     <aside className="lux-sidebar">
@@ -58,6 +63,12 @@ export default function LuxSidebar({
           ))}
         </div>
       </section>
+
+      <LuxAdminPanel
+        onBroadcast={onBroadcast}
+        onClearMessages={onClearMessages}
+        aliases={connectedAliases}
+      />
     </aside>
   );
 }

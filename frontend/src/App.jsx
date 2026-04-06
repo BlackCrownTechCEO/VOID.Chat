@@ -53,6 +53,25 @@ export default function App() {
     setStatus(`Selected ${contact.name}`);
   };
 
+  const handleBroadcast = (text) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        sender: "⬡ SYSTEM",
+        text,
+        fromMe: false,
+        meta: "Admin broadcast"
+      }
+    ]);
+    setStatus("Broadcast sent");
+  };
+
+  const handleClearMessages = () => {
+    setMessages([]);
+    setStatus("Messages cleared by admin");
+  };
+
   const handleSend = async () => {
     if (!peerAlias.trim() || !text.trim()) {
       setStatus("Enter a peer alias and message first");
@@ -87,6 +106,9 @@ export default function App() {
           contacts={contacts}
           currentContact={currentContact}
           onSelectContact={handleSelectContact}
+          onBroadcast={handleBroadcast}
+          onClearMessages={handleClearMessages}
+          connectedAliases={contacts.map((c) => c.name)}
         />
 
         <main className="lux-main">
