@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "VØID",
+    "slug": "void-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": ["**/*"],
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.voidmobile"
+    },
+    "android": {
+      "package": "com.example.voidmobile"
+    },
+    "extra": {
+      "apiUrl": "http://localhost:3500"
+    }
+  }
+}
