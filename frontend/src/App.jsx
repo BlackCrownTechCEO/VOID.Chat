@@ -5,6 +5,7 @@ import LuxSidebar from "./components/LuxSidebar.jsx";
 import LuxHeader from "./components/LuxHeader.jsx";
 import LuxMessages from "./components/LuxMessages.jsx";
 import LuxComposer from "./components/LuxComposer.jsx";
+import LuxProfileSettings from "./components/LuxProfileSettings.jsx";
 import {
   registerBundle,
   createEncryptedOutgoing,
@@ -24,6 +25,10 @@ function persist(key, factory) {
   let v = localStorage.getItem(key);
   if (!v) { v = factory(); localStorage.setItem(key, v); }
   return v;
+}
+function persistJson(key, factory) {
+  try { const v = localStorage.getItem(key); if (v) return JSON.parse(v); } catch {}
+  const v = factory(); localStorage.setItem(key, JSON.stringify(v)); return v;
 }
 function nonce() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
@@ -98,10 +103,15 @@ export default function App() {
     alias:  persist("void.alias",  genAlias),
     voidId: persist("void.voidId", () => crypto.randomUUID()),
   });
+  const [displayName,   setDisplayName]   = useState(() => localStorage.getItem("void.displayName") || "");
+  const [settings,      setSettings]      = useState(() => persistJson("void.settings", () => ({ avatarColor:"#7c5cff", sounds:true, timestamps:true })));
+  const [profileOpen,   setProfileOpen]   = useState(false);
+
   const socketRef  = useRef(null);
   const roomRef    = useRef(null);  // stale-closure guard
   const friendsRef = useRef([]);
   const { alias, voidId } = state;
+  const myName = displayName || alias;
 
   useEffect(() => { roomRef.current    = state.currentRoom; });
   useEffect(() => { friendsRef.current = state.friends; });
@@ -126,7 +136,7 @@ export default function App() {
 
     socket.on("connect", () => {
       dispatch({ type:"SET", payload:{ isConnected:true, status:"Connected" }});
-      socket.emit("authenticate", { voidId, name: alias });
+      socket.emit("authenticate", { voidId, name: myName });
       socket.emit("joinAliasRoom", { alias });
     });
     socket.on("disconnect",    () => dispatch({ type:"SET", payload:{ isConnected:false, status:"Reconnecting…" }}));
@@ -160,7 +170,7 @@ export default function App() {
       if (!room) return;
       dispatch({ type:"ROOM_MSG", room, msg:{
         id: msg.id||nonce(), sender: msg.name||"System", text: msg.text||"",
-        fromMe: msg.name===alias, meta: msg.time||"", type: msg.type||"user",
+        fromMe: msg.name===myName, meta: msg.time||"", type: msg.type||"user",
       }});
     });
     socket.on("history", ({ messages }) => {
@@ -235,7 +245,7 @@ export default function App() {
     socket.on("groupError", ({ message }) => dispatch({ type:"SET", payload:{ status:message }}));
 
     return () => { socket.disconnect(); };
-  }, [voidId, alias]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [voidId, alias, myName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Emit ─────────────────────────────────────────────────────
   const emit = (ev, data) => socketRef.current?.emit(ev, data);
@@ -290,6 +300,17 @@ export default function App() {
   function openFriendDm(name) { dispatch({ type:"SET", payload:{ currentDmPeer:name, activeTab:"dms" }}); }
   function startDm(peer)      { if (peer.trim()) dispatch({ type:"SET", payload:{ currentDmPeer:peer.trim(), activeTab:"dms" }}); }
 
+  function saveProfile({ displayName: dn, avatarColor, sounds, timestamps }) {
+    const trimmed = dn.trim();
+    setDisplayName(trimmed);
+    localStorage.setItem("void.displayName", trimmed);
+    const next = { ...settings, avatarColor, sounds, timestamps };
+    setSettings(next);
+    localStorage.setItem("void.settings", JSON.stringify(next));
+    // Re-authenticate with new name
+    socketRef.current?.emit("authenticate", { voidId, name: trimmed || alias });
+  }
+
   // ── Derived ───────────────────────────────────────────────────
   const messages = (() => {
     if (state.activeTab==="rooms"  && state.currentRoom)    return state.roomMessages[state.currentRoom] || [];
@@ -328,9 +349,20 @@ export default function App() {
 
   return (
     <div className="lux-shell">
+      {profileOpen && (
+        <LuxProfileSettings
+          alias={alias}
+          voidId={voidId}
+          displayName={displayName}
+          settings={settings}
+          onSave={saveProfile}
+          onClose={() => setProfileOpen(false)}
+        />
+      )}
       <div className="lux-app">
         <LuxSidebar
-          me={alias}
+          me={myName}
+          alias={alias}
           activeTab={state.activeTab}
           onTabChange={(tab) => dispatch({ type:"SET", payload:{ activeTab:tab }})}
           isOwner={state.isOwner}
@@ -363,6 +395,8 @@ export default function App() {
           onOwnerCmd={ownerCmd}
           onBroadcast={(text) => ownerCmd("announce", { message:text })}
           onClearMessages={() => adminCmd("clear")}
+          onOpenProfile={() => setProfileOpen(true)}
+          avatarColor={settings.avatarColor}
         />
 
         <main className="lux-main">

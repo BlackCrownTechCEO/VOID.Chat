@@ -10,7 +10,9 @@ const TABS = [
 ];
 
 export default function LuxSidebar({
-  me, activeTab, onTabChange, isOwner, isAdmin, motd, status,
+  me, alias, activeTab, onTabChange, isOwner, isAdmin, motd, status,
+  avatarColor,
+  onOpenProfile,
   // Rooms
   roomList, currentRoom, roomUsers, onJoinRoom, onCreateRoom, onSelectRoom,
   // DMs
@@ -23,6 +25,8 @@ export default function LuxSidebar({
   onClaimOwner, onAdminCmd, onOwnerCmd, onBroadcast, onClearMessages,
 }) {
   const pendingCount = friendRequests?.length || 0;
+  const initials = (me || alias || "VØ").slice(0, 2).toUpperCase();
+  const isConnected = status === "Connected" || status?.startsWith("Joined") || status?.startsWith("E2EE");
 
   return (
     <aside className="lux-sidebar">
@@ -35,15 +39,23 @@ export default function LuxSidebar({
         </div>
       </div>
 
-      {/* Identity */}
-      <section className="identity-card">
-        <div className="label">Your identity</div>
-        <div className="identity-alias">{me}</div>
-        <div className="identity-meta" style={{ display:"flex", alignItems:"center", gap:6 }}>
-          <span className={`status-dot-sm ${status==="Connected" || status?.startsWith("Joined")?"active":""}`} />
-          {status}
+      {/* Identity card — click to open profile/settings */}
+      <button className="identity-card-btn" onClick={onOpenProfile} title="Profile & Settings">
+        <div className="identity-avatar" style={{ background: avatarColor || "var(--accent)" }}>
+          {initials}
         </div>
-      </section>
+        <div className="identity-info">
+          <div className="identity-alias">{me || alias}</div>
+          {me && me !== alias && (
+            <div className="identity-sub-alias">{alias}</div>
+          )}
+          <div className="identity-meta">
+            <span className={`status-dot-sm ${isConnected?"active":""}`} />
+            {status}
+          </div>
+        </div>
+        <div className="identity-settings-icon">⚙</div>
+      </button>
 
       {/* Nav tabs */}
       <nav className="nav-tabs">
