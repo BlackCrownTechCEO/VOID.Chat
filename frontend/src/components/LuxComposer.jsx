@@ -1,11 +1,13 @@
-import { useMemo } from "react";
+export default function LuxComposer({ value, onChange, onSend, disabled, status, placeholder }) {
+  function handleKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (!disabled) onSend();
+    }
+  }
 
-export default function LuxComposer({ value, onChange, onSend, disabled, status }) {
-  const charCount = value.length;
-  const helper = useMemo(() => {
-    if (disabled) return "Enter a peer alias before sending";
-    return "Messages are sent through your existing project transport";
-  }, [disabled]);
+  const isError  = status?.startsWith("⚠") || status?.startsWith("Failed") || status?.startsWith("Send failed");
+  const isReady  = status === "Connected" || status === "E2EE ready" || status?.startsWith("Sent") || status?.startsWith("Joined");
 
   return (
     <footer className="composer-wrap">
@@ -14,22 +16,24 @@ export default function LuxComposer({ value, onChange, onSend, disabled, status 
           className="composer-input"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Compose a more elegant encrypted message…"
+          onKeyDown={handleKey}
+          placeholder={placeholder || "Compose message…"}
           rows={2}
+          disabled={disabled}
         />
-        <button className="primary-btn" onClick={onSend} disabled={disabled}>
+        <button className="primary-btn" onClick={onSend} disabled={disabled || !value.trim()}>
           Send
         </button>
       </div>
 
       <div className="composer-meta">
-        <div>{helper}</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div className="status-pill">
-            <span className="status-dot" />
-            <span>{status}</span>
+        <div className="composer-hint">Enter to send · Shift+Enter for newline</div>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div className={`status-pill ${isError?"error":isReady?"ready":""}`}>
+            <span className={`status-dot ${isReady?"pulse":""}`} />
+            <span>{status || "…"}</span>
           </div>
-          <div>{charCount} chars</div>
+          <div style={{ opacity:0.5 }}>{value.length}</div>
         </div>
       </div>
     </footer>
