@@ -4,7 +4,8 @@ import MessageBubble from "./components/MessageBubble.jsx";
 import { APP_NAME, buildAlias } from "@void/shared";
 import { createEncryptedOutgoing, decryptIncoming, registerBundle } from "./crypto/protocol.js";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3500";
+// Empty string = same origin (works on Vercel). Set VITE_API_URL for a separate backend host.
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function App() {
   const [alias] = useState(() => buildAlias(Math.random().toString(36).slice(2, 8)));
