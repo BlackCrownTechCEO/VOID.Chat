@@ -446,3 +446,110 @@ button, input {
     max-width: 88%;
   }
 }
+
+/* ── Admin / Owner Panel ─────────────────────────────────── */
+.admin-panel-wrap {
+  background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015));
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.admin-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: color 160ms ease;
+}
+
+.admin-toggle:hover { color: var(--text); }
+
+.admin-icon {
+  font-size: 1rem;
+  background: linear-gradient(135deg, rgba(124,92,255,1), rgba(61,217,235,0.9));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.admin-chevron { margin-left: auto; font-size: 0.7rem; }
+
+.admin-body {
+  border-top: 1px solid var(--line-soft);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-lock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-error {
+  color: #f87171;
+  font-size: 0.84rem;
+}
+
+.admin-unlock-btn,
+.admin-action-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.admin-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alias-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.alias-chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(124,92,255,0.14);
+  border: 1px solid rgba(124,92,255,0.28);
+  font-size: 0.82rem;
+  color: var(--accent);
+}
+
+.admin-empty {
+  color: var(--muted-2);
+  font-size: 0.88rem;
+}
+
+.admin-textarea {
+  width: 100%;
+}
+
+.danger-btn {
+  border-color: rgba(248,113,113,0.3);
+  color: #f87171;
+}
+
+.danger-btn:hover {
+  border-color: rgba(248,113,113,0.6);
+  background: rgba(248,113,113,0.07);
+}
