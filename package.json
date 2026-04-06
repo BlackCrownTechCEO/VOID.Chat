@@ -1,6 +1,7 @@
 {
   "name": "void-full-encrypted-protocol",
   "private": true,
+  "engines": { "node": ">=20" },
   "scripts": {
     "install:all": "npm --prefix shared install && npm --prefix backend install && npm --prefix frontend install && npm --prefix mobile install",
     "dev:backend": "npm --prefix backend run dev",

@@ -86,6 +86,13 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`VØID encrypted backend running on http://localhost:${PORT}`);
-});
+// Export for Vercel serverless / test environments
+export { app, server };
+
+// Only bind the port when run directly (not imported by Vercel Functions)
+const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, "/"));
+if (isMain || process.env.VOID_STANDALONE === "1") {
+  server.listen(PORT, () => {
+    console.log(`VØID encrypted backend running on http://localhost:${PORT}`);
+  });
+}
