@@ -8,6 +8,7 @@
     "start": "node .",
     "dev": "nodemon .",
     "build": "npm --prefix shared install && npm --prefix frontend install --install-links && npm --prefix frontend run build",
+    "vercel-build": "npm run build",
     "dev:ui": "npm --prefix frontend run dev"
   },
   "keywords": [],

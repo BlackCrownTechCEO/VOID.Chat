@@ -14,11 +14,16 @@ const OWNER_KEY  = process.env.VOID_OWNER_KEY || 'VOID-OWNER-2024'
 
 const app = express()
 app.use(express.static(path.join(__dirname, "public")))
+
+// ─── Health / readiness (omega spec §12) ────────────────
+app.get('/healthz', (_req, res) => res.json({ status: 'ok' }))
+app.get('/readyz',  (_req, res) => res.json({ status: 'ready' }))
+
 const srv = createServer(app)
 
 if (!process.env.VERCEL) {
-    srv.listen(PORT, () =>
-        console.log(`\x1b[36m[VOID]\x1b[0m Server on :${PORT}  •  Owner key: ${OWNER_KEY}`))
+    // Never log the owner key value — omega §12 / §3.4
+    srv.listen(PORT, () => console.log(`\x1b[36m[VOID]\x1b[0m Server on :${PORT}`))
 }
 
 export default app
@@ -373,7 +378,10 @@ const io = new Server(srv, {
 })
 
 io.on('connection', socket => {
-    console.log(`\x1b[90m[VOID]\x1b[0m + ${socket.id}`)
+    // ── E2EE alias room subscription ───────────────────────
+    socket.on('joinAliasRoom', ({ alias }) => {
+        if (alias && typeof alias === 'string') socket.join(`alias:${alias}`)
+    })
 
     socket.emit('message',buildMsg(SYS,'Welcome to VOID — private messaging by BlackCrownTech.',null,'system'))
 
