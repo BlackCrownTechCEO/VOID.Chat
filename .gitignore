@@ -10,11 +10,13 @@ node_modules/
 .pnp
 .pnp.js
 
-# Build outputs
+# Build outputs — Vite builds Lux UI into public/
 dist/
 build/
 .next/
 out/
+public/*
+!public/.gitkeep
 
 # Logs
 *.log
@@ -41,3 +43,5 @@ Thumbs.db
 .claude/
 server/
 server.zip
+
+.vercel
