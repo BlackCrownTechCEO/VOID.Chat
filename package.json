@@ -1,24 +1,27 @@
 {
   "name": "VOID-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "VØID relay server",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node .",
-    "dev": "nodemon .",
+    "start": "node backend/src/index.js",
+    "dev:backend": "node --watch backend/src/index.js",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently -n RELAY,UI -c magenta,cyan \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build": "npm --prefix frontend install && npm --prefix frontend run build",
-    "vercel-build": "npm run build",
-    "dev:ui": "npm --prefix frontend run dev"
+    "vercel-build": "npm run build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.7.2"
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0"
   }
 }
